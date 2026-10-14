@@ -35,8 +35,15 @@
     var caja = img.closest('.nota-imagen');
     if (caja) {
       var div = document.createElement('div');
-      div.className = 'nota-sin-imagen';
-      div.textContent = '📰';
+      var etiqueta = caja.closest('.nota') && caja.closest('.nota').querySelector('.etiqueta-PE');
+      if (etiqueta) {
+        div.className = 'nota-sin-imagen';
+        div.textContent = '🇵🇪';
+      } else {
+        div.className = 'nota-mundo';
+        div.setAttribute('aria-hidden', 'true');
+        div.innerHTML = '<svg class="nota-mundo-globo" viewBox="0 0 120 120"><use href="#ico-mundo"></use></svg><div class="nota-mundo-texto"><b>Noticias Mundiales</b><small>Comercio exterior</small></div>';
+      }
       img.replaceWith(div);
     } else if (img.classList.contains('articulo-imagen')) {
       img.remove();

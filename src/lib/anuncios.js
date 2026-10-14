@@ -68,8 +68,32 @@ export function espacio(nombre, anuncios, cfg) {
     return `<a class="patrocinio patrocinio-libre" href="/anunciate?espacio=calculadora">
       <span>¿Tu empresa aquí?</span><strong>Patrocina la calculadora</strong></a>`;
   }
+  return bannerLibre(nombre);
+}
+
+// Textos de gancho para cada espacio que aún no tiene anunciante.
+const GANCHOS = {
+  cabecera: { titulo: 'Tu empresa frente a quienes importan y exportan', texto: 'Agencias de aduana, agentes de carga, couriers y negocios internacionales leen ImportaYa todos los días.', boton: 'Anunciar aquí' },
+  pie: { titulo: '¿Ofreces servicios de comercio exterior? Que te encuentren primero', texto: 'Tu marca al final de cada página, justo cuando el cliente busca a quién contratar.', boton: 'Quiero mi banner' },
+  videos: { titulo: 'Aparece junto a las noticias en video del día', texto: 'Un banner a la vista de quienes siguen el comercio exterior y la economía.', boton: 'Anunciar aquí' },
+  noticias: { titulo: 'Anuncia entre las noticias que tus clientes ya leen', texto: 'Importadores, exportadores y agencias de aduana ven tu marca mientras se informan.', boton: 'Ver cómo anunciarme' },
+  lateral: {
+    titulo: 'Tu marca aquí, frente a tu cliente ideal',
+    texto: 'El mejor lugar para llegar a quienes mueven carga y negocios desde y hacia el Perú.',
+    puntos: ['Importadores y exportadores peruanos', 'Visible en noticias y herramientas', 'Tu enlace o WhatsApp directo'],
+    boton: 'Quiero anunciar aquí',
+  },
+};
+
+const ICONO_ANUNCIO = '<svg class="ad-icono" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="12" fill="#f2711c"/><path d="M13 20v8l5 1 14 7V12L18 19l-5 1z" fill="#fff"/><path d="M19 30l2 8h4l-2-7" fill="#ffe2cc"/><path d="M36 19c2 1.5 2 8.5 0 10" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>';
+
+function bannerLibre(nombre) {
+  const g = GANCHOS[nombre] || GANCHOS.noticias;
+  const puntos = g.puntos ? `<ul class="ad-puntos">${g.puntos.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : '';
   return `<a class="ad ad-${nombre} ad-libre" href="/anunciate?espacio=${nombre}">
-    <strong>Tu marca aquí</strong><span>Espacio disponible para empresas · Anúnciate en ImportaYa</span></a>`;
+    ${ICONO_ANUNCIO}
+    <span class="ad-cuerpo"><em class="ad-kicker">Espacio publicitario</em><strong>${esc(g.titulo)}</strong><span class="ad-texto">${esc(g.texto)}</span>${puntos}</span>
+    <span class="ad-boton">${esc(g.boton)} <b aria-hidden="true">→</b></span></a>`;
 }
 
 // Suma las impresiones de los anuncios mostrados (se ejecuta después de responder).

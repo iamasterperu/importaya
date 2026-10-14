@@ -190,14 +190,8 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--naranja); o
 .ad { position: relative; margin: 14px 0; border-radius: 12px; overflow: hidden; }
 .ad img { width: 100%; height: auto; }
 .ad-etiqueta { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,.55); color: #fff; font-size: 0.68rem; padding: 2px 6px; border-radius: 6px; }
-.ad-libre { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-decoration: none; border: 2px dashed var(--borde); background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(242,113,28,.04) 10px, rgba(242,113,28,.04) 20px); color: var(--suave); text-align: center; padding: 12px; }
-.ad-libre strong { color: var(--naranja); font-size: 1.05rem; }
-.ad-libre span { font-size: 0.85rem; }
-.ad-libre:hover { border-color: var(--naranja); }
 .ad-cabecera, .ad-pie, .ad-videos { min-height: 90px; }
-.ad-lateral.ad-libre { min-height: 250px; margin: 0; }
 .ad-lateral { margin: 0; }
-.ad-noticias.ad-libre { min-height: 110px; margin: 2px 0; }
 .patrocinio { display: flex; align-items: center; gap: 12px; text-decoration: none; margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--borde); background: var(--fondo); font-size: 0.85rem; color: var(--suave); }
 .patrocinio img { max-height: 44px; width: auto; }
 .patrocinio-libre { flex-direction: column; align-items: flex-start; gap: 0; border-style: dashed; }
@@ -380,3 +374,48 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--naranja); o
 .calculadora > *, .formulario > *, .dos-columnas > *, .conversor > * { min-width: 0; }
 @media (max-width: 560px) { .calculadora, .formulario { grid-template-columns: minmax(0, 1fr); } }
 .contenido, main, .principal { min-width: 0; }
+
+/* Miniatura "Noticias Mundiales" (noticias extranjeras sin foto) */
+.simbolos { position: absolute; width: 0; height: 0; overflow: hidden; }
+.nota-mundo { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px; text-align: center; color: #fff; position: relative; overflow: hidden;
+  background: radial-gradient(circle at 20% 15%, #1d5fb8 0%, #0e2f66 55%, #071b3d 100%); }
+.nota-mundo::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(rgba(255,255,255,.18) 1px, transparent 1.4px); background-size: 14px 14px; opacity: .5; }
+.nota-mundo::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: linear-gradient(90deg, var(--naranja), #ffb067); }
+.nota-mundo-globo { position: relative; width: 46%; max-width: 92px; min-width: 40px; height: auto; flex: 0 1 auto; filter: drop-shadow(0 6px 10px rgba(0,0,0,.35)); }
+.nota-mundo-texto { position: relative; display: flex; flex-direction: column; line-height: 1.15; }
+.nota-mundo-texto b { font-size: clamp(.62rem, 1.5vw + .35rem, .95rem); letter-spacing: .06em; text-transform: uppercase; font-weight: 800; }
+.nota-mundo-texto small { font-size: .62rem; color: #ffc999; letter-spacing: .08em; text-transform: uppercase; margin-top: 2px; }
+.nota-grande .nota-mundo-globo { max-width: 130px; }
+.nota-grande .nota-mundo-texto b { font-size: 1.15rem; }
+@media (max-width: 600px) { .nota-mundo-texto small { display: none; } .nota-mundo { gap: 2px; padding: 4px; } }
+
+/* Banners libres: invitación a anunciar */
+.ad-libre { position: relative; display: flex; align-items: center; gap: 16px; padding: 16px 20px; text-align: left; text-decoration: none; color: #fff; border: 0;
+  background: linear-gradient(120deg, #0b2545 0%, #13315c 55%, #1d4a80 100%); box-shadow: var(--sombra); isolation: isolate; overflow: hidden; transition: transform .18s, box-shadow .18s; }
+.ad-libre::before { content: ""; position: absolute; right: -40px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgba(242,113,28,.45), transparent 68%); z-index: -1; }
+.ad-libre::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: linear-gradient(var(--naranja), #ffb067); }
+.ad-libre:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(11,37,69,.28); }
+.ad-icono { width: 48px; height: 48px; flex: 0 0 auto; }
+.ad-cuerpo { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.ad-kicker { font-style: normal; font-size: .68rem; letter-spacing: .14em; text-transform: uppercase; color: #ffb067; font-weight: 700; }
+.ad-libre strong { color: #fff; font-size: 1.1rem; line-height: 1.25; }
+.ad-libre .ad-texto { color: #c9d6ea; font-size: .88rem; }
+.ad-boton { flex: 0 0 auto; background: var(--naranja); color: #fff; font-weight: 800; font-size: .9rem; padding: 10px 16px; border-radius: 999px; white-space: nowrap; box-shadow: 0 4px 12px rgba(242,113,28,.4); }
+.ad-libre:hover .ad-boton { background: var(--naranja-osc); }
+.ad-boton b { display: inline-block; transition: transform .18s; }
+.ad-libre:hover .ad-boton b { transform: translateX(4px); }
+.ad-cabecera.ad-libre, .ad-pie.ad-libre, .ad-videos.ad-libre { min-height: 90px; }
+.ad-noticias.ad-libre { min-height: 110px; margin: 6px 0; }
+.ad-lateral.ad-libre { flex-direction: column; align-items: flex-start; justify-content: center; gap: 12px; min-height: 300px; padding: 24px 22px; margin: 0; }
+.ad-lateral.ad-libre strong { font-size: 1.35rem; }
+.ad-lateral.ad-libre .ad-icono { width: 56px; height: 56px; }
+.ad-puntos { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; font-size: .88rem; color: #e7eefb; }
+.ad-puntos li::before { content: "✓"; color: #6ee7a0; font-weight: 800; margin-right: 8px; }
+.ad-lateral .ad-boton { align-self: stretch; text-align: center; }
+@media (max-width: 700px) {
+  .ad-libre { flex-wrap: wrap; padding: 14px 16px; gap: 10px; }
+  .ad-boton { width: 100%; text-align: center; }
+  .ad-libre .ad-texto { font-size: .82rem; }
+}
+.patrocinio-libre { background: linear-gradient(120deg, #0b2545, #13315c); border: 0; color: #c9d6ea; }
+.patrocinio-libre strong { color: #ffb067; }
