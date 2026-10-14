@@ -40,6 +40,7 @@ test('Descarta policiales, deportes, espectáculos y temas ajenos', () => {
     'Papa León XIV: informan resultados posoperatorios y evolución positiva',
     'LATINA NOTICIAS MEDIODÍA - MIÉRCOLES 14 DE OCTUBRE DE 2026',
     'Identifican a la persona que falleció al caer de una montaña rusa en Six Flags',
+    'Nueve detenidos con armas y dinamita en el Callao: cinco son menores de edad',
     'Estas cartas de Pokémon se podrían vender por US$ 20 millones',
     'Chile: tormenta eléctrica, granizo y un tornado sorprenden a Santiago',
   ];

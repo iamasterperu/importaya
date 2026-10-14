@@ -35,7 +35,7 @@ export const EXCLUIR = [
   // Policiales
   'asesin*', 'homicid*', 'sicari*', 'robo', 'robos', 'robar', 'robaron', 'robad*', 'roban', 'ladron*', 'asalt*', 'crimen*', 'criminal*', 'delincuen*',
   'extorsi*', 'secuestr*', 'violaci*', 'feminicid*', 'balacera*', 'baleado*', 'balazo*', 'cadaver*', 'apunal*', 'muerto', 'muertos', 'mueren', 'murio', 'murieron', 'fallecid*',
-  'pandilla*', 'barra brava', 'barras bravas',
+  'pandilla*', 'barra brava', 'barras bravas', 'dinamita', 'armas de fuego', 'detenidos con armas', 'explosivo*', 'atentado*',
   // Deportes
   'futbol*', 'fulbito', 'liga 1', 'liga1', 'torneo*', 'campeonato*', 'champions', 'copa libertadores', 'copa sudamericana', 'eliminatorias',
   'seleccion peruana', 'gol', 'goles', 'deporte*', 'deportivo*', 'deportivas', 'tenis', 'voley*', 'basquet*', 'nba', 'ufc', 'boxeo', 'olimpic*',
