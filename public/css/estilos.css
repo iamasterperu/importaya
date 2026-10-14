@@ -419,3 +419,15 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--naranja); o
 }
 .patrocinio-libre { background: linear-gradient(120deg, #0b2545, #13315c); border: 0; color: #c9d6ea; }
 .patrocinio-libre strong { color: #ffb067; }
+
+/* Esquema de la página en cada espacio publicitario */
+.mapa-web { display: block; width: 150px; max-width: 60%; height: auto; margin: 0 auto 12px; border-radius: 8px; background: var(--tarjeta); border: 1px solid var(--borde); padding: 4px; }
+.mapa-web .mw-menu { fill: var(--azul-2); }
+.mapa-web .mw-bloque { fill: #dfe7f2; }
+.mapa-web .mw-otro { fill: #ffe7d3; stroke: #f5b98a; stroke-width: .8; stroke-dasharray: 3 2; }
+.mapa-web .mw-activo { fill: var(--naranja); stroke: #b34a08; stroke-width: 1; animation: mw-pulso 1.8s ease-in-out infinite; }
+.mapa-web .mw-texto { fill: #fff; font: 800 7px Inter, Arial, sans-serif; letter-spacing: .08em; }
+@keyframes mw-pulso { 50% { opacity: .72; } }
+@media (prefers-reduced-motion: reduce) { .mapa-web .mw-activo { animation: none; } }
+@media (prefers-color-scheme: dark) { .mapa-web .mw-bloque { fill: #2a3b55; } .mapa-web .mw-otro { fill: #4a3526; stroke: #8a5a36; } }
+.espacio-tarjeta { text-align: left; }

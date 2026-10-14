@@ -71,4 +71,8 @@ export const CONFIG = {
   precio_videos: 'S/ 250 al mes',
   precio_pie: 'S/ 150 al mes',
   oferta_anual: 'Paga 10 meses y recibe 12 (2 meses gratis).',
+  // Cobro y contacto de ventas (salen en el PDF y en la respuesta automática)
+  cuenta_bcp: '19440084898094',
+  cuenta_cci: '00219414008489809493',
+  correo_ventas: 'iamasterperu@gmail.com',
 };

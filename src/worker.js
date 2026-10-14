@@ -12,6 +12,8 @@ import * as publica from './api/publica.js';
 import * as paginas from './paginas/publicas.js';
 import * as herramientas from './paginas/herramientas.js';
 import * as apiHerramientas from './api/herramientas.js';
+import { pdfPublicidad } from './lib/pdf-publicidad.js';
+import { NOMBRE_PDF } from './lib/correos-ventas.js';
 
 const CSP = [
   "default-src 'self'",
@@ -80,6 +82,16 @@ export default {
       const [cfg, anuncios, tc] = await Promise.all([leerConfig(env.DB), cargarAnuncios(env.DB), tipoCambioActual(env.DB)]);
       const p = { ...c, base: urlBase(env, request), cfg, anuncios, tc };
 
+      if (ruta === `/anunciate/${NOMBRE_PDF}`) {
+        const pdf = await pdfPublicidad(cfg, { sitio: p.base.replace(/^https?:\/\//, ''), correo: cfg.correo_ventas });
+        return new Response(pdf, {
+          headers: {
+            'content-type': 'application/pdf',
+            'content-disposition': `attachment; filename="${NOMBRE_PDF}"`,
+            'cache-control': 'public, max-age=300',
+          },
+        });
+      }
       if (ruta === '/sitemap.xml') return paginas.sitemap(p);
       if (ruta === '/robots.txt') return paginas.robots(p);
 

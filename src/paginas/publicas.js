@@ -2,6 +2,8 @@
 import { html, mesLima, mesAnterior, fechaLima, esBot } from '../lib/http.js';
 import { esc, recortar, fechaLarga, nombreMes, terminoLimpio, slug, PAISES } from '../lib/texto.js';
 import { espacio, ESPACIOS } from '../lib/anuncios.js';
+import { svgEsquema } from '../lib/mapa-web.js';
+import { NOMBRE_PDF } from '../lib/correos-ventas.js';
 import { historialTipoCambio } from '../tareas/tipo-cambio.js';
 import { topTerminos } from '../tareas/mantenimiento.js';
 import { registrarBusqueda } from '../api/publica.js';
@@ -505,10 +507,13 @@ export async function anunciate(ctx) {
   <div><b>24/7</b><span>actualización automática</span></div>
 </section>
 <h2>Espacios disponibles</h2>
+<p class="ayuda">En cada dibujo, el bloque naranja muestra <b>en qué parte de la página</b> aparecerá tu publicidad.</p>
+<p><a class="btn btn-naranja" href="/anunciate/${NOMBRE_PDF}" download>⬇ Descargar PDF con medidas, lugares y precios</a></p>
 <div class="rejilla-espacios">
 ${Object.entries(ESPACIOS)
   .map(
     ([id, e]) => `<article class="espacio-tarjeta${id === elegido ? ' elegido' : ''}" id="espacio-${id}">
+  ${svgEsquema(id, 'Dónde aparece: ' + e.nombre)}
   <h3>${esc(e.nombre)}</h3><p>${esc(e.detalle)}</p>
   <p class="nota-meta"><span>Medida: ${esc(e.medida)}</span></p>
   <p class="precio">${esc(cfg['precio_' + id] || 'Consultar')}</p>
@@ -520,7 +525,7 @@ ${Object.entries(ESPACIOS)
 <p class="oferta">⭐ <b>Plan anual:</b> ${esc(cfg.oferta_anual)} Pago por transferencia o Yape, con comprobante.</p>
 <section class="caja contacto" id="contacto">
   <h2>Escríbenos</h2>
-  <p>Déjanos tus datos y te enviamos la propuesta con las cifras actualizadas.</p>
+  <p>Déjanos tus datos y te respondemos al correo con los precios, el PDF con las medidas y los datos para pagar.</p>
   <form id="form-contacto" class="formulario">
     <label>Tu nombre<input name="nombre" required maxlength="80" autocomplete="name"></label>
     <label>Empresa<input name="empresa" maxlength="100" autocomplete="organization"></label>
