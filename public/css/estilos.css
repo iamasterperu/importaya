@@ -456,3 +456,35 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--naranja); o
 @media (max-width: 760px) { .pago-rejilla { grid-template-columns: minmax(0, 1fr); } }
 .pago-yape .pago-qr, .pago-bcp-cab img { display: block; margin-left: auto; margin-right: auto; }
 .pago-yape .pago-qr { margin-bottom: 4px; }
+
+/* Calculadora de IGV */
+.solo-importacion { display: none; }
+.modo-importacion .solo-importacion { display: flex; }
+.resultado tr.fuerte td { font-weight: 800; color: var(--azul); }
+/* Cursos */
+.rejilla-cursos { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.curso { display: flex; flex-direction: column; gap: 8px; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: var(--radio); padding: 18px; box-shadow: var(--sombra); border-top: 4px solid var(--naranja); }
+.curso h3 { margin: 0; }
+.curso p { margin: 0; color: var(--suave); font-size: .93rem; flex: 1; }
+.curso-icono { font-size: 1.8rem; }
+
+/* Portada: herramientas gratis */
+.gratis { margin-bottom: 24px; }
+.rejilla-gratis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.rejilla-gratis .herramienta { padding: 14px; }
+.rejilla-gratis .herramienta h3 { font-size: 1rem; }
+.rejilla-gratis .herramienta p { font-size: .85rem; }
+.herramienta-cursos { background: #fff7ef; }
+@media (max-width: 1000px) { .rejilla-gratis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .rejilla-gratis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Pago por espacio */
+.pago-resumen { display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr); gap: 18px; align-items: center; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: var(--radio); padding: 18px; box-shadow: var(--sombra); margin-bottom: 18px; }
+.pago-resumen h2 { margin-top: 0; }
+.pago-mp { grid-column: 1 / -1; background: #eef6ff; border: 1px solid #b9d7f5; padding: 20px; text-align: center; }
+.pago-mp h3 { color: #0b3d91; margin-top: 0; }
+.pago-despues { margin: 14px 0 6px; font-size: .9rem; }
+.pago-bcp .pago-despues { color: var(--suave); }
+.pago-yape .pago-despues { color: #e9c8f2; }
+.campo-ancho { grid-column: 1 / -1; }
+@media (max-width: 760px) { .pago-resumen { grid-template-columns: minmax(0, 1fr); } }

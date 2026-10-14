@@ -191,15 +191,17 @@ CREATE TABLE IF NOT EXISTS empresas (
 );
 CREATE INDEX IF NOT EXISTS idx_empresas_estado ON empresas (estado, razon_social);
 
--- Avisos de pago de anunciantes ("Ya pagué").
-CREATE TABLE IF NOT EXISTS pagos (
+-- Pedidos de publicidad pagados con tarjeta (Mercado Pago).
+CREATE TABLE IF NOT EXISTS pedidos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre TEXT NOT NULL,
   empresa TEXT NOT NULL,
   email TEXT NOT NULL,
   telefono TEXT,
-  espacio TEXT,
-  metodo TEXT NOT NULL,                      -- yape / transferencia
-  operacion TEXT,                            -- número de operación o referencia
-  creado TEXT NOT NULL
+  espacio TEXT NOT NULL,
+  monto REAL NOT NULL,
+  estado TEXT NOT NULL DEFAULT 'pendiente',  -- pendiente / pagado
+  mp_pago_id TEXT,
+  creado TEXT NOT NULL,
+  pagado TEXT
 );

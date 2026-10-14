@@ -119,14 +119,18 @@ export async function pdfPublicidad(cfg, { sitio = 'importaya', correo = 'iamast
   pdf.nuevaPagina();
   y = cabecera(pdf, false) + 30;
   pdf.texto(MARGEN, y + 6, 'Cómo pagar', { tam: 20, negrita: true, color: AZUL });
-  pdf.parrafo(MARGEN, y + 26, 'Elige tu espacio y paga en soles por Yape o por transferencia. Después presiona "Ya pagué" en la página de pago.', pdf.ancho - MARGEN * 2, { tam: 10.5, color: '#3b475a' });
+  pdf.parrafo(MARGEN, y + 26, 'Elige tu espacio, llena tus datos y paga con Yape, por transferencia o con tarjeta en la página de pago.', pdf.ancho - MARGEN * 2, { tam: 10.5, color: '#3b475a' });
   y += 52;
   const colW = (pdf.ancho - MARGEN * 2 - 18) / 2;
   panelYape(pdf, MARGEN, y, colW, cfg);
   panelBcp(pdf, MARGEN + colW + 18, y, colW, cfg);
   y += 380;
-  pdf.rect(MARGEN, y, pdf.ancho - MARGEN * 2, 44, { relleno: '#fff3e8', borde: '#f5b98a', radio: 8 });
-  pdf.parrafo(MARGEN + 14, y + 18, `Al pagar, entra a ${sitio}/anunciate/pagar y presiona "Ya pagué". Te llegará un correo de confirmación con este PDF.`, pdf.ancho - MARGEN * 2 - 28, { tam: 10, negrita: true, color: '#b34a08' });
+  pdf.rect(MARGEN, y, pdf.ancho - MARGEN * 2, 60, { relleno: '#eef6ff', borde: '#b9d7f5', radio: 8 });
+  pdf.texto(MARGEN + 14, y + 20, 'También puedes pagar con tarjeta (crédito o débito)', { tam: 11, negrita: true, color: '#0b3d91' });
+  pdf.parrafo(MARGEN + 14, y + 38, `Pago en línea y seguro con Mercado Pago en ${sitio}/anunciate/pagar. Aceptamos todas las tarjetas.`, pdf.ancho - MARGEN * 2 - 28, { tam: 10, color: '#18212f' });
+  y += 76;
+  pdf.rect(MARGEN, y, pdf.ancho - MARGEN * 2, 64, { relleno: '#fff3e8', borde: '#f5b98a', radio: 8 });
+  pdf.parrafo(MARGEN + 14, y + 20, `Si pagas con Yape o transferencia, envía la captura del pago a ${correo} con el asunto: PAGO REALIZADO - NOMBRE DE TU EMPRESA. Te responderemos automáticamente con las instrucciones.`, pdf.ancho - MARGEN * 2 - 28, { tam: 10, negrita: true, color: '#b34a08' });
   pie(pdf, sitio, correo, 3, total);
 
   // ── Página 4: qué enviar ──
@@ -137,7 +141,7 @@ export async function pdfPublicidad(cfg, { sitio = 'importaya', correo = 'iamast
   const pasos = [
     ['1', 'Prepara tu imagen', 'En formato PNG o JPG, con la medida exacta del espacio que elegiste (mira la tabla de abajo).'],
     ['2', 'Indica el enlace de destino', 'Escribe la dirección web (link) a la que quieres que lleve tu anuncio cuando alguien haga clic.'],
-    ['3', 'Envíanos todo por correo', `Manda a ${correo}: la imagen, el link y el voucher o captura de tu pago.`],
+    ['3', 'Envíanos todo por correo', `Responde el correo que te enviamos (o escribe a ${correo}) con la imagen y el link. Si pagaste con Yape o transferencia, tu voucher va antes con el asunto PAGO REALIZADO - NOMBRE DE TU EMPRESA.`],
     ['4', `Tu anuncio sale en ${HORAS_PUBLICACION} horas`, `Dentro de ${HORAS_PUBLICACION} horas después de recibir tu archivo, tu publicidad estará en la página web de ImportaYa.`],
   ];
   for (const [n, t, d] of pasos) {

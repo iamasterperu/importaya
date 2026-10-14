@@ -14,6 +14,7 @@ function cargarCliente(archivo, nombre) {
   return ctx[nombre];
 }
 const carga = cargarCliente('carga.js', 'IYCarga');
+const igv = cargarCliente('igv.js', 'IYIgv');
 const cotizador = cargarCliente('cotizador.js', 'IYCotizador');
 
 test('RUC: dígito verificador y tipo de contribuyente', () => {
@@ -118,4 +119,19 @@ test('Cotizador: subtotales, IGV y totales en soles y dólares', () => {
   // Montos vacíos o negativos no suman
   const v = cotizador.totales([{ concepto: 'x', monto: -5, moneda: 'USD', afecto: true }], 3.5, 18);
   assert.equal(v.totalPen, 0);
+});
+
+test('Calculadora de IGV: agrega, quita y calcula el IGV de una importación', () => {
+  const a = igv.agregar(1000, 18);
+  assert.equal(igv.r2(a.igv), 180);
+  assert.equal(igv.r2(a.total), 1180);
+  const q = igv.quitar(1180, 18);
+  assert.equal(igv.r2(q.base), 1000);
+  assert.equal(igv.r2(q.igv), 180);
+  const i = igv.importacion(1000, 10, 0, 18); // CIF 1000 + ad valorem 10 % = base 1100
+  assert.equal(igv.r2(i.adValorem), 100);
+  assert.equal(igv.r2(i.base), 1100);
+  assert.equal(igv.r2(i.igv), 176); // 16 %
+  assert.equal(igv.r2(i.ipm), 22); // 2 %
+  assert.equal(igv.r2(i.impuestos), 298);
 });

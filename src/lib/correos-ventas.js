@@ -74,9 +74,8 @@ export function correoRespuesta(cfg, c, origen) {
     <h3 style="color:#13315c;margin:22px 0 8px">Cómo contratar</h3>
     <ol style="padding-left:20px;margin:0 0 12px">
       <li><b>Elige tu espacio</b> de la lista.</li>
-      <li><b>Paga en soles</b> por Yape o por transferencia (datos abajo).</li>
-      <li>Entra a <a href="${esc(origen)}/anunciate/pagar" style="color:#d9560b"><b>${esc(origen.replace(/^https?:\/\//, ''))}/anunciate/pagar</b></a> y presiona <b>"Ya pagué"</b>.</li>
-      <li>Te llegará un correo de confirmación con instrucciones para enviarnos tu banner.</li>
+      <li>Entra a <a href="${esc(origen)}/anunciate/pagar" style="color:#d9560b"><b>${esc(origen.replace(/^https?:\/\//, ''))}/anunciate/pagar</b></a>, elige tu espacio y paga con Yape, transferencia o tarjeta.</li>
+      <li>Si pagas con Yape o transferencia, envía la captura del pago a ${esc(cfg.correo_ventas)} con el asunto <b>PAGO REALIZADO - TU EMPRESA</b>.</li>
     </ol>
     ${bloquePago(cfg, origen)}
     <p style="margin-top:20px">Si tienes dudas, responde este correo y te ayudamos.</p>
@@ -87,7 +86,7 @@ export function correoRespuesta(cfg, c, origen) {
     para: c.email,
     asunto: 'ImportaYa: precios de publicidad y cómo contratar',
     html,
-    texto: `Hola ${c.nombre}, gracias por escribirnos. Adjuntamos el PDF con precios, medidas y el esquema de la página.\nPago en soles — Yape: ${cfg.yape_numero} — BCP: ${cfg.cuenta_bcp} — CCI: ${cfg.cuenta_cci}.\nDespués de pagar entra a ${origen}/anunciate/pagar y presiona "Ya pagué".`,
+    texto: `Hola ${c.nombre}, gracias por escribirnos. Adjuntamos el PDF con precios, medidas y el esquema de la página.\nPago en soles — Yape: ${cfg.yape_numero} — BCP: ${cfg.cuenta_bcp} — CCI: ${cfg.cuenta_cci}.\nPara pagar entra a ${origen}/anunciate/pagar.`,
     responder_a: cfg.correo_ventas,
     nombre: 'ImportaYa',
     pdf_url: `${origen}/anunciate/${NOMBRE_PDF}`,
@@ -114,10 +113,10 @@ export function correoPagoCliente(cfg, p, origen) {
   ${cabeceraCorreo(origen)}
   <div style="padding:20px 6px">
     <p>Hola <b>${esc(p.nombre)}</b>,</p>
-    <p>¡Gracias! Recibimos tu aviso de pago de <b>${esc(p.empresa)}</b>${e ? ` para el espacio <b>${esc(e.nombre)}</b>` : ''}. Estamos verificando el pago.</p>
+    <p>¡Muchas gracias! Tu pago ${p.metodo === 'tarjeta' ? 'con tarjeta fue <b>aprobado</b>' : 'fue recibido'} y <b>es una inversión</b> en hacer crecer a <b>${esc(p.empresa)}</b> frente a importadores y exportadores del Perú.${e ? ` Contrataste el espacio <b>${esc(e.nombre)}</b>.` : ''}</p>
     ${e ? `<div style="background:#f4f6fa;border-radius:8px;padding:10px 14px;margin:10px 0"><b>${esc(e.nombre)}</b><br><span style="color:#5b6779">${esc(e.detalle)}</span><br>Medida del banner: <b>${esc(e.medida)}</b></div>` : ''}
     <h3 style="color:#13315c;margin:20px 0 8px">Ahora envíanos tu anuncio</h3>
-    <p>Responde este correo (o escribe a <b>${esc(cfg.correo_ventas)}</b>) con:</p>
+    <p><b>Responde este correo</b> (o escribe a <b>${esc(cfg.correo_ventas)}</b>) con:</p>
     <ol style="padding-left:20px;margin:0">
       <li>La <b>imagen de tu banner en PNG o JPG</b>${e ? `, exactamente de <b>${esc(e.medida)}</b>` : ', con la medida de tu espacio (está en el PDF adjunto)'}.</li>
       <li>El <b>link (enlace)</b> a donde quieres que lleve tu anuncio cuando hagan clic.</li>
@@ -129,9 +128,9 @@ export function correoPagoCliente(cfg, p, origen) {
   </div></div>`;
   return {
     para: p.email,
-    asunto: 'ImportaYa: recibimos tu pago, envía tu banner',
+    asunto: 'Gracias por tu pago · envía tu banner a ImportaYa',
     html,
-    texto: `Hola ${p.nombre}, recibimos tu aviso de pago. Envía a ${cfg.correo_ventas} la imagen de tu banner en PNG o JPG${e ? ' de ' + e.medida : ''} y el link a donde debe llevar. Tu anuncio estará en la web dentro de ${HORAS_PUBLICACION} horas después de que envíes el archivo.`,
+    texto: `Hola ${p.nombre}, muchas gracias: tu pago fue recibido y es una inversión para tu empresa. Envía a ${cfg.correo_ventas} la imagen de tu banner en PNG o JPG${e ? ' de ' + e.medida : ''} y el link a donde debe llevar. Tu anuncio estará en la web dentro de ${HORAS_PUBLICACION} horas después de que envíes el archivo.`,
     responder_a: cfg.correo_ventas,
     nombre: 'ImportaYa',
     pdf_url: `${origen}/anunciate/${NOMBRE_PDF}`,
@@ -143,13 +142,13 @@ export function correoPagoCliente(cfg, p, origen) {
 export function correoPagoAviso(cfg, p, origen) {
   const e = ESPACIOS[p.espacio];
   const html = `<div style="font-family:Arial,sans-serif;font-size:15px;color:#18212f">
-  <p style="background:#e8f7ee;border-left:4px solid #1f9d55;padding:10px 14px;margin:0 0 14px"><b>${esc(p.empresa)} ya pagó</b> (aviso desde ${esc(origen)}/anunciate/pagar). Verifica el pago y espera su banner para publicarlo.</p>
-  <table style="border-collapse:collapse">${filaDato('Empresa', p.empresa)}${filaDato('Contacto', p.nombre)}${filaDato('Correo', p.email)}${filaDato('WhatsApp / teléfono', p.telefono)}${filaDato('Espacio', e ? `${e.nombre} (${e.medida})` : 'No indicó')}${filaDato('Precio', e ? cfg['precio_' + p.espacio] : '')}${filaDato('Método', p.metodo === 'yape' ? 'Yape' : 'Transferencia')}${filaDato('N.º de operación', p.operacion)}</table>
-  <p style="color:#5b6779;font-size:13px;margin-top:16px">Ya se le envió la confirmación con el PDF y las instrucciones. Cuando te mande el banner (PNG o JPG) y el link, publícalo desde el panel de administración: se le prometió que saldrá dentro de ${HORAS_PUBLICACION} horas. Puedes responder a este correo para escribirle.</p>
+  <p style="background:#e8f7ee;border-left:4px solid #1f9d55;padding:10px 14px;margin:0 0 14px"><b>${esc(p.empresa)} ya pagó con tarjeta</b> (Mercado Pago aprobó el pago ${esc(p.operacion)}). Espera su banner para publicarlo.</p>
+  <table style="border-collapse:collapse">${filaDato('Empresa', p.empresa)}${filaDato('Contacto', p.nombre)}${filaDato('Correo', p.email)}${filaDato('WhatsApp / teléfono', p.telefono)}${filaDato('Espacio', e ? `${e.nombre} (${e.medida})` : 'No indicó')}${filaDato('Precio', e ? cfg['precio_' + p.espacio] : '')}${filaDato('Método', 'Tarjeta (Mercado Pago)')}${filaDato('N.º de pago', p.operacion)}</table>
+  <p style="color:#5b6779;font-size:13px;margin-top:16px">Ya se le envió la confirmación con el PDF y las instrucciones al correo del cliente. Cuando te mande el banner (PNG o JPG) y el link, publícalo desde el panel de administración: se le prometió que saldrá dentro de ${HORAS_PUBLICACION} horas. Puedes responder a este correo para escribirle.</p>
 </div>`;
   return {
     para: cfg.correo_ventas,
-    asunto: `[ImportaYa · PAGO] ${p.empresa} ya pagó${e ? ' · ' + e.nombre : ''}`,
+    asunto: `PAGO CON TARJETA APROBADO - ${p.empresa}`,
     html,
     texto: `${p.empresa} ya pagó. Contacto: ${p.nombre} ${p.email} ${p.telefono}. Espacio: ${e ? e.nombre : '-'}. Método: ${p.metodo}. Operación: ${p.operacion}.`,
     responder_a: p.email,

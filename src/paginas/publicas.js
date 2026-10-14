@@ -108,7 +108,7 @@ export async function inicio(ctx) {
 <section class="portada">
   <div class="portada-texto">
     <h1>Todo lo que un importador y exportador necesita saber hoy</h1>
-    <p class="portada-para">Para <b>importadores y exportadores</b> · ambos</p>
+    <p class="portada-para">Para <b>importadores y exportadores</b></p>
     <p>Noticias de Perú 🇵🇪, China 🇨🇳 y el mundo 🌎 actualizadas cada hora, el dólar del día y la calculadora de impuestos de importación. <b>Gratis.</b></p>
     <div class="portada-botones">
       <a class="btn btn-naranja" href="/calculadora">🧮 ¿Cuánto pago de aduana?</a>
@@ -124,6 +124,17 @@ export async function inicio(ctx) {
         : '<p>El tipo de cambio aparecerá en unos minutos.</p>'
     }
   </a>
+</section>
+
+<section class="gratis" aria-labelledby="titulo-gratis">
+  <div class="titulo-seccion"><h2 id="titulo-gratis">🎁 Gratis para ti</h2><a href="/herramientas">Ver todas las herramientas</a></div>
+  <div class="rejilla-gratis">
+    <a class="herramienta" href="/calculadora"><span class="herramienta-icono" aria-hidden="true">🧮</span><h3>Calculadora de impuestos</h3><p>Ad valorem, IGV y percepción de tu importación.</p></a>
+    <a class="herramienta" href="/herramientas/carga"><span class="herramienta-icono" aria-hidden="true">📦</span><h3>Calculadora de carga</h3><p>CBM, peso volumétrico y contenedores.</p></a>
+    <a class="herramienta" href="/herramientas/cotizador"><span class="herramienta-icono" aria-hidden="true">🧾</span><h3>Cotizador de clientes</h3><p>Cotizaciones con tu marca, en PDF o WhatsApp.</p></a>
+    <a class="herramienta" href="/herramientas/igv"><span class="herramienta-icono" aria-hidden="true">➕</span><h3>Calculadora de IGV</h3><p>Agrega o quita el IGV de un precio.</p></a>
+    <a class="herramienta herramienta-cursos" href="/herramientas/cursos"><span class="herramienta-icono" aria-hidden="true">🎓</span><h3>Cursos de ventas en PDF</h3><p>4 guías gratis para vender más en comercio exterior.</p></a>
+  </div>
 </section>
 
 <div class="columnas">
@@ -498,7 +509,7 @@ export async function anunciate(ctx) {
   <div class="portada-texto">
     <h1>Anuncia tu empresa frente a importadores y exportadores del Perú</h1>
     <p>ImportaYa es la web para <b>importadores y exportadores</b>: reúne a personas y empresas que compran y venden con China, EE. UU. y el mundo, el público ideal para agentes de carga, agencias de aduana, couriers, bancos, seguros y almacenes.</p>
-    <div class="portada-botones"><a class="btn btn-naranja btn-grande" href="#contacto">Quiero anunciar</a>${wsp}</div>
+    <div class="portada-botones"><a class="btn btn-naranja btn-grande" href="#espacios">Ver espacios y precios</a>${wsp}</div>
   </div>
 </section>
 <section class="cifras">
@@ -507,7 +518,7 @@ export async function anunciate(ctx) {
   <div><b>${num(videos?.n)}</b><span>videos de noticias</span></div>
   <div><b>24/7</b><span>actualización automática</span></div>
 </section>
-<h2>Espacios disponibles</h2>
+<h2 id="espacios">Espacios disponibles</h2>
 <p class="ayuda">En cada dibujo, el bloque naranja muestra <b>en qué parte de la página</b> aparecerá tu publicidad.</p>
 <p><a class="btn btn-naranja" href="/anunciate/${NOMBRE_PDF}" download>⬇ Descargar PDF con medidas, lugares y precios</a></p>
 <div class="rejilla-espacios">
@@ -518,33 +529,13 @@ ${Object.entries(ESPACIOS)
   <h3>${esc(e.nombre)}</h3><p>${esc(e.detalle)}</p>
   <p class="nota-meta"><span>Medida: ${esc(e.medida)}</span></p>
   <p class="precio">${esc(cfg['precio_' + id] || 'Consultar')}</p>
-  <a class="btn btn-claro" href="?espacio=${id}#contacto">Elegir este espacio</a>
+  <a class="btn btn-naranja" href="/anunciate/pagar?espacio=${id}">Contratar este espacio</a>
 </article>`
   )
   .join('')}
 </div>
-<p class="oferta">⭐ <b>Plan anual:</b> ${esc(cfg.oferta_anual)} Pago por Yape o transferencia.</p>
-<p class="oferta oferta-pago">💳 ¿Ya elegiste tu espacio? <a class="btn btn-naranja" href="/anunciate/pagar">Pagar con Yape o transferencia</a></p>
-<section class="caja contacto" id="contacto">
-  <h2>Escríbenos</h2>
-  <p>Déjanos tus datos y te respondemos al correo con los precios, el PDF con las medidas y los datos para pagar.</p>
-  <form id="form-contacto" class="formulario">
-    <label>Tu nombre<input name="nombre" required maxlength="80" autocomplete="name"></label>
-    <label>Empresa<input name="empresa" maxlength="100" autocomplete="organization"></label>
-    <label>Correo<input name="email" type="email" maxlength="120" autocomplete="email"></label>
-    <label>WhatsApp / teléfono<input name="telefono" maxlength="30" autocomplete="tel"></label>
-    <label>Espacio de interés
-      <select name="espacio"><option value="">No sé todavía</option>${Object.entries(ESPACIOS)
-        .map(([id, e]) => `<option value="${id}"${id === elegido ? ' selected' : ''}>${esc(e.nombre)}</option>`)
-        .join('')}</select>
-    </label>
-    <label class="campo-ancho">Mensaje<textarea name="mensaje" rows="3" maxlength="1000"></textarea></label>
-    <label class="trampa" aria-hidden="true">No llenar<input name="web" tabindex="-1" autocomplete="off"></label>
-    <button class="btn btn-naranja btn-grande" type="submit">Enviar</button>
-    <p class="mensaje-form" role="status"></p>
-  </form>
-  ${cfg.email ? `<p>O escríbenos a <a href="mailto:${esc(cfg.email)}">${esc(cfg.email)}</a></p>` : ''}
-</section>`;
+<p class="oferta">⭐ <b>Plan anual:</b> ${esc(cfg.oferta_anual)} Pagas con Yape, transferencia o tarjeta.</p>
+<p class="ayuda">¿Dudas? Escríbenos${cfg.email ? ` a <a href="mailto:${esc(cfg.email)}">${esc(cfg.email)}</a>` : ''}${cfg.whatsapp ? ' o por WhatsApp' : ''}.</p>`;
   return html(
     pagina(ctx, {
       titulo: 'Anúnciate en ImportaYa',
@@ -556,80 +547,136 @@ ${Object.entries(ESPACIOS)
   );
 }
 
-// Página de pago: Yape y transferencia + formulario "Ya pagué".
+// Página de pago: se elige el espacio, se llenan los datos y se paga con Yape, transferencia o tarjeta.
 export function pagar(ctx) {
   const { cfg } = ctx;
   const url = new URL(ctx.request.url);
-  const elegido = ESPACIOS[url.searchParams.get('espacio')] ? url.searchParams.get('espacio') : '';
+  const id = ESPACIOS[url.searchParams.get('espacio')] ? url.searchParams.get('espacio') : '';
   const copiar = (v) => `<button type="button" class="btn btn-claro btn-copiar" data-copiar="${esc(v)}">Copiar</button>`;
+
+  // Sin espacio elegido: se muestran las opciones
+  if (!id) {
+    const opciones = Object.entries(ESPACIOS)
+      .map(
+        ([k, e]) => `<article class="espacio-tarjeta">
+  ${svgEsquema(k, 'Dónde aparece: ' + e.nombre)}
+  <h3>${esc(e.nombre)}</h3><p>${esc(e.detalle)}</p>
+  <p class="nota-meta"><span>Medida: ${esc(e.medida)}</span></p>
+  <p class="precio">${esc(cfg['precio_' + k] || 'Consultar')}</p>
+  <a class="btn btn-naranja" href="/anunciate/pagar?espacio=${k}">Contratar este espacio</a>
+</article>`
+      )
+      .join('');
+    return html(
+      pagina(ctx, {
+        titulo: 'Elige tu espacio publicitario',
+        ruta: '/anunciate/pagar',
+        seccion: 'anunciate',
+        noindex: true,
+        cuerpo: `<h1>Elige el espacio que quieres contratar</h1><div class="rejilla-espacios">${opciones}</div>`,
+      })
+    );
+  }
+
+  const e = ESPACIOS[id];
+  const precio = cfg['precio_' + id] || 'Consultar';
   const cuerpo = `
 <section class="portada portada-anuncio">
   <div class="portada-texto">
-    <h1>Paga tu publicidad en ImportaYa</h1>
-    <p>Paga en soles por <b>Yape</b> o por <b>transferencia</b> y avísanos aquí. Tu anuncio sale en la web <b>dentro de ${HORAS_PUBLICACION} horas</b> después de que nos envíes tu banner.</p>
+    <h1>Contrata: ${esc(e.nombre)}</h1>
+    <p>Llena tus datos y paga con <b>Yape</b>, <b>transferencia</b> o <b>tarjeta</b>. Tu anuncio sale en la web <b>dentro de ${HORAS_PUBLICACION} horas</b> después de que nos envíes tu banner.</p>
   </div>
 </section>
+<section class="pago-resumen">
+  ${svgEsquema(id, 'Dónde aparece: ' + e.nombre)}
+  <div>
+    <h2>${esc(e.nombre)}</h2>
+    <p>${esc(e.detalle)}</p>
+    <p class="nota-meta"><span>Medida del banner: <b>${esc(e.medida)}</b></span></p>
+    <p class="precio">${esc(precio)}</p>
+    <p><a href="/anunciate#espacios">← Elegir otro espacio</a></p>
+  </div>
+</section>
+
+<section class="caja contacto" id="datos">
+  <h2>1. Tus datos</h2>
+  <form id="form-pago-datos" class="formulario" data-correo="${esc(cfg.correo_ventas)}" data-espacio="${id}" data-espacio-nombre="${esc(e.nombre)}" data-medida="${esc(e.medida)}" data-precio="${esc(precio)}">
+    <label>Tu nombre<input name="nombre" required maxlength="80" autocomplete="name"></label>
+    <label>Empresa<input name="empresa" required maxlength="100" autocomplete="organization"></label>
+    <label>Teléfono / WhatsApp<input name="telefono" required maxlength="30" inputmode="tel" autocomplete="tel"></label>
+    <label>Correo (aquí te llega la confirmación)<input name="email" type="email" required maxlength="120" autocomplete="email"></label>
+    <p class="mensaje-form campo-ancho" id="mensaje-pago" role="status"></p>
+  </form>
+</section>
+
+<h2>2. Elige cómo pagar</h2>
 <div class="pago-rejilla">
   <section class="pago-tarjeta pago-yape">
-    <h2>Paga con Yape</h2>
+    <h3>Paga con Yape</h3>
     <img class="pago-qr" src="/assets/yape-qr.png" alt="Código QR de Yape para pagar" width="330" height="324">
     <p class="pago-linea">o yapea al número</p>
     <p class="pago-numero">${esc(cfg.yape_numero)}</p>
     ${copiar(cfg.yape_numero)}
+    <p class="pago-linea pago-despues">Después de pagar, envía la captura:</p>
+    <button type="button" class="btn btn-naranja" data-voucher="Yape">Enviar mi voucher por correo</button>
   </section>
   <section class="pago-tarjeta pago-bcp">
     <div class="pago-bcp-cab"><img src="/assets/bcp-azul.png" alt="BCP" width="260" height="74"></div>
     <div class="pago-bcp-cuerpo">
-      <h2>Transferencia en soles</h2>
+      <h3>Transferencia en soles</h3>
       <p class="pago-etiqueta">Cuenta BCP Soles</p>
       <p class="pago-cuenta"><b>${esc(cfg.cuenta_bcp)}</b> ${copiar(cfg.cuenta_bcp)}</p>
       <p class="pago-etiqueta">Cuenta interbancaria (CCI)</p>
       <p class="pago-cuenta"><b>${esc(cfg.cuenta_cci)}</b> ${copiar(cfg.cuenta_cci)}</p>
       <p class="suave">Desde cualquier banco o billetera.</p>
+      <p class="pago-despues">Después de transferir, envía la captura:</p>
+      <button type="button" class="btn btn-naranja" data-voucher="Transferencia">Enviar mi voucher por correo</button>
     </div>
   </section>
+  <section class="pago-tarjeta pago-mp">
+    <h3>💳 Paga con tarjeta</h3>
+    <p>Pago en línea y seguro con <b>Mercado Pago</b>. Aceptamos todas las tarjetas de crédito y débito.</p>
+    <p class="suave">Al terminar, te llega un correo con todo lo que debes hacer para publicar tu anuncio.</p>
+    <button type="button" class="btn btn-naranja btn-grande" id="pagar-tarjeta">Pagar ${esc(precio)} con tarjeta</button>
+  </section>
 </div>
-<section class="caja contacto" id="ya-pague">
-  <h2>Ya pagué</h2>
-  <p>Después de pagar, completa esto. Te enviamos un correo con el PDF y las instrucciones, y yo recibo el aviso para publicar tu anuncio.</p>
-  <form id="form-pago" class="formulario">
-    <label>Tu nombre<input name="nombre" required maxlength="80" autocomplete="name"></label>
-    <label>Empresa<input name="empresa" required maxlength="100" autocomplete="organization"></label>
-    <label>Correo (te enviamos la confirmación)<input name="email" type="email" required maxlength="120" autocomplete="email"></label>
-    <label>WhatsApp / teléfono<input name="telefono" maxlength="30" autocomplete="tel"></label>
-    <label>Espacio que pagaste
-      <select name="espacio" required><option value="">Elige…</option>${Object.entries(ESPACIOS)
-        .map(([id, e]) => `<option value="${id}"${id === elegido ? ' selected' : ''}>${esc(e.nombre)} (${esc(e.medida)}) · ${esc(cfg['precio_' + id] || '')}</option>`)
-        .join('')}</select>
-    </label>
-    <label>¿Cómo pagaste?
-      <select name="metodo"><option value="yape">Yape</option><option value="transferencia">Transferencia</option></select>
-    </label>
-    <label class="campo-ancho">N.º de operación (opcional)<input name="operacion" maxlength="40"></label>
-    <label class="trampa" aria-hidden="true">No llenar<input name="web" tabindex="-1" autocomplete="off"></label>
-    <button class="btn btn-naranja btn-grande" type="submit">Ya pagué</button>
-    <p class="mensaje-form" role="status"></p>
-  </form>
+<section class="caja" id="voucher-ayuda" hidden>
+  <h2>Envía tu voucher</h2>
+  <p>Se abrió tu correo con el mensaje listo. <b>Adjunta la captura de pantalla del pago</b> y envíalo. Si no se abrió, escribe a <b>${esc(cfg.correo_ventas)}</b> con este asunto: <b id="asunto-voucher"></b></p>
+  <p>Te responderemos automáticamente con las instrucciones para enviarnos tu banner.</p>
 </section>
 <section class="caja">
-  <h2>Qué debes enviarnos después de pagar</h2>
+  <h2>Qué pasa después</h2>
   <ol>
-    <li>La <b>imagen de tu banner en PNG o JPG</b> con la medida exacta de tu espacio.</li>
-    <li>El <b>link</b> a donde quieres que lleve tu anuncio.</li>
-    <li>Envía todo a <a href="mailto:${esc(cfg.correo_ventas)}">${esc(cfg.correo_ventas)}</a> (o responde el correo de confirmación).</li>
+    <li>Recibes un correo de confirmación con un PDF que explica cómo enviar tu anuncio.</li>
+    <li>Respondes ese correo con tu <b>banner en PNG o JPG de ${esc(e.medida)}</b> y el <b>link</b> a donde debe llevar.</li>
+    <li><b>Tu anuncio estará en la web dentro de ${HORAS_PUBLICACION} horas</b> después de que envíes el archivo.</li>
   </ol>
-  <p><b>Tu anuncio estará en la web dentro de ${HORAS_PUBLICACION} horas</b> después de recibir tu archivo. <a href="/anunciate/${NOMBRE_PDF}" download>Descargar PDF con las medidas</a>.</p>
 </section>`;
   return html(
     pagina(ctx, {
-      titulo: 'Pagar publicidad',
-      descripcion: 'Paga tu espacio publicitario en ImportaYa por Yape o transferencia BCP.',
+      titulo: 'Contratar publicidad: ' + e.nombre,
+      descripcion: 'Contrata tu espacio publicitario en ImportaYa y paga con Yape, transferencia o tarjeta.',
       ruta: '/anunciate/pagar',
       seccion: 'anunciate',
       cuerpo,
       noindex: true,
     })
   );
+}
+
+// Página a la que vuelve el cliente desde Mercado Pago.
+export function gracias(ctx) {
+  const estado = new URL(ctx.request.url).searchParams.get('estado');
+  const mensajes = {
+    ok: ['¡Pago recibido, gracias!', `Tu pago con tarjeta fue aprobado y es una inversión para tu empresa. Revisa tu correo (y la carpeta de spam): te enviamos las instrucciones y un PDF para mandarnos tu banner. Tu anuncio estará en la web dentro de ${HORAS_PUBLICACION} horas después de que envíes el archivo.`],
+    pendiente: ['Tu pago está pendiente', 'Mercado Pago está procesando tu pago. Cuando se apruebe te llegará un correo con las instrucciones para enviarnos tu banner.'],
+    fallo: ['No se pudo completar el pago', 'No te cobraron nada. Puedes intentarlo otra vez con otra tarjeta, o pagar con Yape o transferencia.'],
+  };
+  const [titulo, texto] = mensajes[estado] || mensajes.pendiente;
+  const cuerpo = `<section class="no-encontrado"><h1>${esc(titulo)}</h1><p>${esc(texto)}</p>
+  <a class="btn btn-naranja" href="${estado === 'fallo' ? '/anunciate/pagar' : '/'}">${estado === 'fallo' ? 'Volver a pagar' : 'Ir al inicio'}</a></section>`;
+  return html(pagina(ctx, { titulo, ruta: '/anunciate/gracias', seccion: 'anunciate', cuerpo, noindex: true }), 200, { 'cache-control': 'no-store' });
 }
 
 // ─────────────────────────── Otras ───────────────────────────
@@ -663,7 +710,7 @@ export function noEncontrado(ctx) {
 
 export async function sitemap(ctx) {
   const { results } = await ctx.env.DB.prepare('SELECT id, titulo, publicado FROM noticias WHERE oculta = 0 ORDER BY publicado DESC LIMIT 1000').all();
-  const fijas = ['/', '/noticias', '/videos', '/calculadora', '/herramientas', '/herramientas/carga', '/herramientas/cotizador', '/herramientas/partidas', '/herramientas/guias', '/directorio', '/tendencias', '/anunciate'];
+  const fijas = ['/', '/noticias', '/videos', '/calculadora', '/herramientas', '/herramientas/carga', '/herramientas/cotizador', '/herramientas/igv', '/herramientas/cursos', '/herramientas/partidas', '/herramientas/guias', '/directorio', '/tendencias', '/anunciate'];
   const urls = fijas
     .map((u) => `<url><loc>${esc(ctx.base + u)}</loc><changefreq>hourly</changefreq></url>`)
     .concat(results.map((n) => `<url><loc>${esc(ctx.base + `/n/${n.id}/${slug(n.titulo) || 'noticia'}`)}</loc><lastmod>${esc(n.publicado)}</lastmod></url>`));
