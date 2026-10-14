@@ -45,7 +45,7 @@ GEMINI_MODEL = "gemini-2.5-flash" # solo se usa si agregas el secreto GEMINI_API
 [[d1_databases]]
 binding = "DB"
 database_name = "importaya-db"
-database_id = "PEGA-AQUI-EL-DATABASE-ID"   # ← paso 2 del README
+database_id = "2cc82a9e-c30b-4a50-b4d9-eea5abf2c5fd"   # ← paso 2 del README
 
 [observability]
 enabled = true
