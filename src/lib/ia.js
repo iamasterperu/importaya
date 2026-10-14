@@ -5,7 +5,7 @@ export async function generarTexto(env, sistema, usuario) {
   const errores = [];
   if (env.AI) {
     try {
-      const r = await env.AI.run(env.AI_MODEL || '@cf/meta/llama-3.1-8b-instruct', {
+      const r = await env.AI.run(env.AI_MODEL || '@cf/meta/llama-3.1-8b-instruct-fast', {
         messages: [
           { role: 'system', content: sistema },
           { role: 'user', content: usuario },

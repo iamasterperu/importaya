@@ -162,3 +162,31 @@ CREATE TABLE IF NOT EXISTS rate_limits (
   contador INTEGER NOT NULL,
   expira INTEGER NOT NULL
 );
+
+-- Arancel de aduanas (partidas). Se carga desde /admin → Partidas.
+CREATE TABLE IF NOT EXISTS partidas (
+  codigo TEXT PRIMARY KEY,                   -- solo dígitos, 6 a 10
+  descripcion TEXT NOT NULL,
+  busqueda TEXT NOT NULL,                    -- descripción sin tildes y en minúsculas (para buscar)
+  advalorem REAL,                            -- 0, 6 u 11
+  notas TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_partidas_busqueda ON partidas (busqueda);
+
+-- Directorio de empresas importadoras y exportadoras (se publican solo las aprobadas).
+CREATE TABLE IF NOT EXISTS empresas (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ruc TEXT NOT NULL UNIQUE,                  -- RUC de persona jurídica (empieza con 20)
+  razon_social TEXT NOT NULL,
+  tipo TEXT NOT NULL,                        -- importador / exportador / ambos / agencia / carga
+  rubro TEXT,
+  productos TEXT,
+  ciudad TEXT,
+  web TEXT,
+  telefono TEXT,
+  email TEXT,                                -- privado: solo lo ve el administrador
+  descripcion TEXT,
+  estado TEXT NOT NULL DEFAULT 'pendiente',  -- pendiente / aprobada / rechazada
+  creado TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_empresas_estado ON empresas (estado, razon_social);

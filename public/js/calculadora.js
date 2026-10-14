@@ -6,6 +6,15 @@
   var datos = JSON.parse(document.getElementById('datos-calculadora').textContent);
   var ultimoProducto = '';
 
+  // Si se llega desde el buscador de partidas (?av=6), se deja elegido ese ad valorem.
+  var avUrl = parseFloat(new URLSearchParams(location.search).get('av'));
+  if (!isNaN(avUrl) && avUrl >= 0 && avUrl <= 100) {
+    var sel = form.elements.advalorem;
+    var existe = Array.prototype.some.call(sel.options, function (o) { return parseFloat(o.value) === avUrl; });
+    if (!existe) { var op = document.createElement('option'); op.value = String(avUrl); op.textContent = avUrl + ' %'; sel.appendChild(op); }
+    sel.value = String(avUrl);
+  }
+
   function num(nombre) {
     var v = parseFloat(String(form.elements[nombre].value).replace(',', '.'));
     return isNaN(v) || v < 0 ? 0 : v;

@@ -42,19 +42,13 @@ export const CANALES = [
   { nombre: 'BBC News Mundo', entrada: '@BBCMundo', categoria: 'MUNDO' },
   { nombre: 'CNN en Español', entrada: '@cnnee', categoria: 'MUNDO' },
 ];
-
-export const PALABRAS_CLAVE = [
-  'import', 'export', 'aduan', 'arancel', 'sunat', 'comercio exterior', 'comercio internacional',
-  'puerto', 'callao', 'chancay', 'flete', 'contenedor', 'naviera', 'logistic', 'carga', 'tlc',
-  'tratado', 'mincetur', 'promperu', 'dolar', 'tipo de cambio', 'china', 'courier', 'mercancia',
-  'tariff', 'trade', 'shipping', 'freight', 'container', 'port', 'customs', 'cargo', 'supply chain',
-].join(', ');
-
 export const CONFIG = {
   whatsapp: '',
   email: '',
   mostrar_espacios_libres: '1',
-  palabras_clave: PALABRAS_CLAVE,
+  // Palabras que se SUMAN a las que ya trae el filtro de temas (src/lib/filtro.js). Una por coma.
+  palabras_extra: '',
+  palabras_excluidas: '',
   terminos_ocultos: '',
   ia_activa: '1',
   ia_por_hora: '15',

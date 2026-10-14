@@ -10,6 +10,8 @@ import { ejecutarTarea, tareasDelMinuto } from './tareas/index.js';
 import { manejarAdmin } from './api/admin.js';
 import * as publica from './api/publica.js';
 import * as paginas from './paginas/publicas.js';
+import * as herramientas from './paginas/herramientas.js';
+import * as apiHerramientas from './api/herramientas.js';
 
 const CSP = [
   "default-src 'self'",
@@ -58,6 +60,8 @@ export default {
           const c = { request, env, waitUntil: (p) => ctx.waitUntil(p) };
           if (ruta === '/api/busqueda' && metodo === 'POST') return await publica.busqueda(c);
           if (ruta === '/api/contacto' && metodo === 'POST') return await publica.contacto(c);
+          if (ruta === '/api/partidas' && metodo === 'GET') return await apiHerramientas.partidas(c);
+          if (ruta === '/api/directorio' && metodo === 'POST') return await apiHerramientas.registrarEmpresa(c);
           return error('No encontrado.', 404);
         } catch (e) {
           console.error(e);
@@ -88,6 +92,12 @@ export default {
       else if (ruta === '/calculadora') [respuesta, seccion] = [await paginas.calculadora(p), 'calculadora'];
       else if (ruta === '/tendencias') [respuesta, seccion] = [await paginas.tendencias(p), 'tendencias'];
       else if ((m = ruta.match(/^\/tendencias\/(\d{4}-\d{2})$/))) [respuesta, seccion] = [await paginas.tendencias(p, m[1]), 'tendencias'];
+      else if (ruta === '/herramientas') [respuesta, seccion] = [herramientas.inicioHerramientas(p), 'herramientas'];
+      else if (ruta === '/herramientas/carga') [respuesta, seccion] = [herramientas.herramientaCarga(p), 'herramientas'];
+      else if (ruta === '/herramientas/cotizador') [respuesta, seccion] = [herramientas.herramientaCotizador(p), 'herramientas'];
+      else if (ruta === '/herramientas/partidas') [respuesta, seccion] = [herramientas.herramientaPartidas(p), 'herramientas'];
+      else if (ruta === '/herramientas/guias') [respuesta, seccion] = [herramientas.herramientaGuias(p), 'herramientas'];
+      else if (ruta === '/directorio') [respuesta, seccion] = [await herramientas.directorio(p), 'directorio'];
       else if (ruta === '/anunciate') [respuesta, seccion] = [await paginas.anunciate(p), 'anunciate'];
       else if (ruta === '/privacidad') [respuesta, seccion] = [paginas.privacidad(p), 'privacidad'];
       else {

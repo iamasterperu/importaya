@@ -43,23 +43,24 @@
     }
   }, true);
 
-  // Formulario de contacto de anunciantes
-  var form = document.getElementById('form-contacto');
-  if (form) {
+  // Formularios públicos (contacto de anunciantes y registro en el directorio)
+  function enviarFormulario(form, ruta, gracias) {
+    if (!form) return;
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       var msg = form.querySelector('.mensaje-form');
       var boton = form.querySelector('button[type="submit"]');
       var datos = {};
       new FormData(form).forEach(function (v, k) { datos[k] = v; });
+      Array.prototype.forEach.call(form.querySelectorAll('input[type="checkbox"]'), function (c) { datos[c.name] = c.checked; });
       boton.disabled = true;
       msg.textContent = 'Enviando…';
-      fetch('/api/contacto', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(datos) })
+      fetch(ruta, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(datos) })
         .then(function (r) { return r.json(); })
         .then(function (r) {
           if (r.ok) {
             form.reset();
-            msg.textContent = '¡Gracias! Te escribiremos muy pronto con la propuesta.';
+            msg.textContent = gracias;
           } else {
             msg.textContent = r.error || 'No se pudo enviar. Inténtalo otra vez.';
           }
@@ -68,4 +69,6 @@
         .finally(function () { boton.disabled = false; });
     });
   }
+  enviarFormulario(document.getElementById('form-contacto'), '/api/contacto', '¡Gracias! Te escribiremos muy pronto con la propuesta.');
+  enviarFormulario(document.getElementById('form-directorio'), '/api/directorio', '¡Gracias! Revisaremos los datos de tu empresa y la publicaremos en el directorio.');
 })();

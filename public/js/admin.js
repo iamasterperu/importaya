@@ -3,7 +3,7 @@
   var vista = document.getElementById('vista');
   var NOMBRES_TAREAS = {
     noticias: 'Noticias', videos: 'Videos de YouTube', tipo_cambio: 'Tipo de cambio',
-    resumenes: 'Resúmenes con IA', ranking: 'Ranking mensual', limpieza: 'Limpieza',
+    resumenes: 'Resúmenes con IA', ranking: 'Ranking mensual', limpieza: 'Limpieza', filtro: 'Filtro de temas',
   };
   var PAISES = { PE: '🇵🇪 Perú', CN: '🇨🇳 China', US: '🇺🇸 EE. UU.', MUNDO: '🌎 Mundo' };
 
@@ -84,7 +84,7 @@
   // ── Navegación ──
   var VISTAS = {
     resumen: resumen, publicidad: publicidad, noticias: noticias, fuentes: fuentes,
-    youtube: youtube, busquedas: busquedas, contactos: contactos, ajustes: ajustes,
+    youtube: youtube, busquedas: busquedas, contactos: contactos, partidas: partidas, directorio: directorio, ajustes: ajustes,
   };
   function router() {
     var id = (location.hash || '#resumen').slice(1);
@@ -152,6 +152,17 @@
     'contacto-borrar': function (b) {
       if (!confirm('¿Borrar este contacto?')) return;
       return api('contactos-borrar', { id: +b.dataset.id }).then(contactos);
+    },
+    'partidas-vaciar': function () {
+      if (!confirm('¿Borrar TODAS las partidas cargadas?')) return;
+      return api('partidas-vaciar', {}).then(function () { aviso('Partidas borradas'); partidas(); });
+    },
+    'empresa-estado': function (b) {
+      return api('empresas-estado', { id: +b.dataset.id, estado: b.dataset.estado }).then(function () { aviso('Listo'); directorio(); });
+    },
+    'empresa-borrar': function (b) {
+      if (!confirm('¿Borrar esta empresa del directorio?')) return;
+      return api('empresas-borrar', { id: +b.dataset.id }).then(directorio);
     },
   };
 
@@ -392,6 +403,71 @@
     });
   }
 
+  // ── Partidas arancelarias ──
+  function partidas() {
+    return api('partidas').then(function (d) {
+      var muestra = d.muestra.map(function (p) { return '<li><b>' + esc(p.codigo) + '</b> · ' + esc(p.descripcion) + ' · ' + (p.advalorem == null ? '—' : p.advalorem + ' %') + '</li>'; }).join('');
+      vista.innerHTML =
+        '<h2>Arancel de aduanas (partidas)</h2>' +
+        '<p class="ayuda">Aquí cargas el arancel para que funcione el <a href="/herramientas/partidas" target="_blank">buscador de partidas</a>. Hoy hay <b>' + d.total + '</b> partidas cargadas.</p>' +
+        (muestra ? '<ul class="ayuda">' + muestra + '</ul>' : '') +
+        '<form class="admin-form" id="form-partidas">' +
+        '<p class="ancho ayuda">Sube un archivo de <b>texto o CSV</b> con una partida por línea: <code>partida ; descripción ; ad valorem ; notas</code> (las notas son opcionales). Sirve el separador punto y coma, tabulación o barra |. Si tienes el arancel en Excel, guárdalo como “CSV (delimitado por comas)” o “Texto (delimitado por tabulaciones)”. La partida puede llevar puntos (8518.30.00.00) y se ignoran los encabezados.</p>' +
+        '<label class="ancho">Archivo<input type="file" name="archivo" accept=".csv,.txt,.tsv,text/plain,text/csv"></label>' +
+        '<label class="ancho">…o pega las líneas aquí<textarea name="texto" rows="6" placeholder="8518.30.00.00;Auriculares;0"></textarea></label>' +
+        '<label class="check ancho"><input type="checkbox" name="reemplazar" checked> Reemplazar todo lo que hay (recomendado la primera vez)</label>' +
+        '<div class="botones"><button class="btn btn-naranja" type="submit">Cargar partidas</button>' + (d.total ? '<button class="btn btn-claro" type="button" data-accion="partidas-vaciar">Borrar todas</button>' : '') + '</div>' +
+        '<p class="ancho ayuda" id="progreso-partidas" role="status"></p></form>';
+      document.getElementById('form-partidas').onsubmit = function (e) {
+        e.preventDefault();
+        var f = e.target;
+        var archivo = f.archivo.files[0];
+        var leer = archivo ? archivo.text() : Promise.resolve(f.texto.value);
+        var boton = f.querySelector('button[type="submit"]');
+        var prog = document.getElementById('progreso-partidas');
+        boton.disabled = true;
+        leer.then(function (texto) {
+          var lineas = texto.split(/\r?\n/).filter(function (l) { return l.trim(); });
+          if (!lineas.length) throw new Error('No hay líneas para cargar.');
+          var reemplazar = f.reemplazar.checked;
+          var guardadas = 0, descartadas = 0, i = 0;
+          function siguiente() {
+            if (i >= lineas.length) { aviso(guardadas + ' partidas cargadas' + (descartadas ? ' (' + descartadas + ' líneas ignoradas)' : '')); return partidas(); }
+            var trozo = lineas.slice(i, i + 300).join('\n');
+            return api('partidas-importar', { texto: trozo, reemplazar: reemplazar && i === 0 }).then(function (r) {
+              guardadas += r.guardadas; descartadas += r.descartadas; i += 300;
+              prog.textContent = 'Cargando… ' + Math.min(i, lineas.length) + ' de ' + lineas.length + ' líneas';
+              return siguiente();
+            });
+          }
+          return siguiente();
+        }).catch(function (x) { aviso(x.message); prog.textContent = x.message; }).finally(function () { boton.disabled = false; });
+      };
+    });
+  }
+
+  // ── Directorio de empresas ──
+  function directorio() {
+    return api('empresas').then(function (d) {
+      var ETQ = { pendiente: '🟡 Pendiente', aprobada: '🟢 Publicada', rechazada: '🔴 Rechazada' };
+      var filas = d.empresas.map(function (e) {
+        var wsp = e.telefono ? ' · <a href="https://wa.me/' + esc(e.telefono.replace(/\D/g, '')) + '" target="_blank" rel="noopener">WhatsApp</a>' : '';
+        var botones = ['aprobada', 'rechazada', 'pendiente'].filter(function (s) { return s !== e.estado; }).map(function (s) {
+          return '<button data-accion="empresa-estado" data-id="' + e.id + '" data-estado="' + s + '">' + (s === 'aprobada' ? 'Publicar' : s === 'rechazada' ? 'Rechazar' : 'Dejar pendiente') + '</button>';
+        }).join('');
+        return '<tr class="' + (e.estado === 'rechazada' ? 'apagado' : '') + '"><td>' + (ETQ[e.estado] || esc(e.estado)) + '<br><small>' + fecha(e.creado) + '</small></td>' +
+          '<td><b>' + esc(e.razon_social) + '</b><br><small>RUC ' + esc(e.ruc) + ' · ' + esc(d.tipos[e.tipo] || e.tipo) + '</small><br><small>' + esc([e.rubro, e.ciudad].filter(Boolean).join(' · ')) + '</small></td>' +
+          '<td>' + esc(e.productos) + '<br><small>' + esc(e.descripcion) + '</small></td>' +
+          '<td>' + (e.email ? '<a href="mailto:' + esc(e.email) + '">' + esc(e.email) + '</a><br>' : '') + esc(e.telefono) + wsp + (e.web ? '<br><a href="' + esc(e.web) + '" target="_blank" rel="noopener">' + esc(e.web) + '</a>' : '') + '</td>' +
+          '<td class="acciones">' + botones + '<button class="peligro" data-accion="empresa-borrar" data-id="' + e.id + '">Borrar</button></td></tr>';
+      }).join('');
+      vista.innerHTML =
+        '<h2>Directorio de empresas</h2>' +
+        '<p class="ayuda">Las empresas se registran en <a href="/directorio" target="_blank">el directorio</a> y quedan <b>pendientes</b>. Revisa el RUC en la SUNAT antes de pulsar “Publicar”: solo las publicadas se ven en la web. El correo nunca se muestra al público.</p>' +
+        '<div class="tabla-env"><table class="tabla"><thead><tr><th>Estado</th><th>Empresa</th><th>Detalle</th><th>Contacto</th><th></th></tr></thead><tbody>' + (filas || '<tr><td colspan="5">Todavía no se registró ninguna empresa.</td></tr>') + '</tbody></table></div>';
+    });
+  }
+
   // ── Ajustes ──
   function ajustes() {
     return api('config').then(function (d) {
@@ -418,7 +494,10 @@
         '<h2 class="ancho">Noticias e IA</h2>' +
         '<label class="check"><input type="checkbox" name="ia_activa"' + (c.ia_activa === '1' ? ' checked' : '') + '> Resumir y traducir noticias con IA</label>' +
         campo('ia_por_hora', 'Resúmenes por hora (máx. 40)') +
-        campo('palabras_clave', 'Palabras clave del rubro (para las fuentes con filtro)', { ancho: true, area: true, filas: 3 }) +
+        '<h2 class="ancho">Filtro de temas (noticias y videos)</h2>' +
+        '<p class="ancho ayuda">Solo se publica lo que habla de <b>comercio exterior, logística y economía</b>, y se descarta lo policial, deportivo o de espectáculos. Ya viene con una lista amplia. Aquí puedes sumar palabras: una palabra completa (<code>uva</code>), una frase (<code>tipo de cambio</code>) o el comienzo de una palabra con asterisco (<code>aduan*</code>). Sepáralas con comas. Después de guardar, pulsa “Ejecutar” en <b>Filtro de temas</b> (pestaña Resumen) para limpiar lo ya publicado.</p>' +
+        campo('palabras_extra', 'Palabras que SÍ deben dejar pasar (extra)', { ancho: true, area: true, filas: 2 }) +
+        campo('palabras_excluidas', 'Palabras que deben DESCARTAR una noticia o video (extra)', { ancho: true, area: true, filas: 2 }) +
         campo('terminos_ocultos', 'Términos ocultos del ranking (separados por coma)', { ancho: true, area: true, filas: 2 }) +
         '<div class="botones"><button class="btn btn-naranja" type="submit">Guardar ajustes</button></div></form>';
       document.getElementById('form-ajustes').onsubmit = function (e) {

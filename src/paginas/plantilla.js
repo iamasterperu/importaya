@@ -7,6 +7,7 @@ const MENU = [
   ['/noticias', 'Noticias', 'noticias'],
   ['/videos', 'Videos', 'videos'],
   ['/calculadora', 'Calculadora', 'calculadora'],
+  ['/herramientas', 'Herramientas', 'herramientas'],
   ['/tendencias', 'Lo más buscado', 'tendencias'],
   ['/anunciate', 'Anúnciate', 'anunciate'],
 ];
@@ -77,6 +78,7 @@ ${cuerpo}
     <div>
       <h3>Secciones</h3>
       ${MENU.map(([href, texto]) => `<a href="${href}">${texto}</a>`).join('')}
+      <a href="/directorio">Directorio de empresas</a>
     </div>
     <div>
       <h3>Empresas</h3>

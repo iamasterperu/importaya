@@ -2,6 +2,8 @@
 // YouTube publica gratis la lista de videos de cada canal (sin clave de API).
 import { leerYoutube } from '../lib/rss.js';
 import { ahoraIso } from '../lib/http.js';
+import { leerConfig } from '../lib/config.js';
+import { crearFiltro } from '../lib/filtro.js';
 
 const NAVEGADOR = {
   'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
@@ -20,13 +22,14 @@ export async function actualizarVideos(env, { lote = 12, soloCanal = null } = {}
           .bind(lote)
           .all()
       ).results;
-  const res = await Promise.all(canales.map((c) => procesarCanal(db, c)));
+  const filtro = crearFiltro(await leerConfig(db));
+  const res = await Promise.all(canales.map((c) => procesarCanal(db, c, filtro)));
   const nuevos = res.reduce((a, r) => a + r.nuevos, 0);
   const errores = res.filter((r) => r.error).length;
   return `${canales.length} canales revisados, ${nuevos} videos nuevos${errores ? `, ${errores} con error` : ''}`;
 }
 
-async function procesarCanal(db, c) {
+async function procesarCanal(db, c, filtro) {
   const ahora = ahoraIso();
   try {
     let id = c.channel_id;
@@ -39,7 +42,8 @@ async function procesarCanal(db, c) {
       signal: AbortSignal.timeout(12000),
     });
     if (!r.ok) throw new Error(`YouTube respondió ${r.status}`);
-    const videos = leerYoutube(await r.text(), 15);
+    // Solo se guardan los videos cuyo título habla de comercio exterior o economía.
+    const videos = leerYoutube(await r.text(), 15).filter((v) => filtro.relevante(v.titulo));
     let nuevos = 0;
     if (videos.length) {
       const res = await db.batch(
