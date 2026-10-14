@@ -378,54 +378,110 @@ test('Sin puente de correo configurado, el mensaje igual se guarda', async () =>
   assert.equal(r.status, 200);
 });
 
-test('Pagar: la página muestra Yape y BCP, y "Ya pagué" avisa al dueño y confirma al cliente', async () => {
-  const pagina = await (await pedir('/anunciate/pagar')).text();
+test('Anúnciate ya no tiene formulario y cada espacio lleva a su página de pago', async () => {
+  const h = await (await pedir('/anunciate')).text();
+  assert.equal(h.includes('form-contacto'), false);
+  assert.match(h, /\/anunciate\/pagar\?espacio=cabecera/);
+});
+
+test('Pagar: sin espacio ofrece las opciones; con espacio muestra datos, Yape, BCP y tarjeta', async () => {
+  const sin = await (await pedir('/anunciate/pagar')).text();
+  assert.match(sin, /Elige el espacio/);
+  const pagina = await (await pedir('/anunciate/pagar?espacio=cabecera')).text();
+  assert.match(pagina, /form-pago-datos/);
   assert.match(pagina, /992644771/);
   assert.match(pagina, /19440084898094/);
   assert.match(pagina, /00219414008489809493/);
   assert.match(pagina, /yape-qr\.png/);
   assert.match(pagina, /bcp-azul\.png/);
+  assert.match(pagina, /data-voucher="Yape"/);
+  assert.match(pagina, /data-voucher="Transferencia"/);
+  assert.match(pagina, /id="pagar-tarjeta"/);
+  assert.match(pagina, /Mercado Pago/);
+  assert.match(pagina, /dentro de 2 horas/);
+});
 
+test('Tarjeta: Mercado Pago crea el pago y, al aprobarse, avisa al dueño y al cliente una sola vez', async () => {
   const enviados = [];
   const fetchOriginal = globalThis.fetch;
   globalThis.fetch = async (url, init) => {
-    if (String(url).startsWith('https://puente.test')) {
-      enviados.push(JSON.parse(init.body));
-      return new Response('{"ok":true}');
+    const u = String(url);
+    if (u.startsWith('https://puente.test')) { enviados.push(JSON.parse(init.body)); return new Response('{"ok":true}'); }
+    if (u === 'https://api.mercadopago.com/checkout/preferences') {
+      const b = JSON.parse(init.body);
+      assert.equal(init.headers.authorization, 'Bearer TOKEN-PRUEBA');
+      assert.equal(b.items[0].unit_price, 400);
+      assert.equal(b.items[0].currency_id, 'PEN');
+      assert.match(b.notification_url, /\/api\/mp\/webhook$/);
+      return new Response(JSON.stringify({ init_point: 'https://mp.test/checkout/abc' }));
+    }
+    if (u === 'https://api.mercadopago.com/v1/payments/555') {
+      return new Response(JSON.stringify({ status: 'approved', external_reference: globalThis.__pedido, transaction_amount: 400, currency_id: 'PEN' }));
     }
     return fetchOriginal(url, init);
   };
-  const envCorreo = { ...env, CORREO_URL: 'https://puente.test/exec', CORREO_CLAVE: 'clave-puente' };
+  const envMp = { ...env, CORREO_URL: 'https://puente.test/exec', CORREO_CLAVE: 'c', MP_ACCESS_TOKEN: 'TOKEN-PRUEBA' };
   const pedidos = [];
   const ctxEspera = { waitUntil: (p) => pedidos.push(Promise.resolve(p)) };
-  const avisar = async (cuerpo) => {
-    const r = await worker.fetch(
-      new Request(`${BASE}/api/pago`, { method: 'POST', headers: { 'content-type': 'application/json', origin: BASE, 'cf-connecting-ip': '7.7.7.7' }, body: JSON.stringify(cuerpo) }),
-      envCorreo,
-      ctxEspera
-    );
+  const post = async (ruta, cuerpo, e = envMp, cabeceras = {}) => {
+    const r = await worker.fetch(new Request(`${BASE}${ruta}`, { method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': '6.6.6.6', ...cabeceras }, body: JSON.stringify(cuerpo) }), e, ctxEspera);
     await Promise.all(pedidos.splice(0));
     return r;
   };
+  const bueno = { nombre: 'Rosa Díaz', empresa: 'PeruCargo', email: 'rosa@perucargo.pe', telefono: '999000111', espacio: 'cabecera' };
   try {
-    const bueno = { nombre: 'Rosa Díaz', empresa: 'Aduanas del Sur SAC', email: 'rosa@aduanas.pe', telefono: '999000111', espacio: 'cabecera', metodo: 'yape', operacion: '123456' };
-    assert.equal((await avisar({ ...bueno, email: 'malo' })).status, 400);
-    assert.equal((await avisar({ ...bueno, espacio: 'x' })).status, 400);
-    assert.equal(enviados.length, 0);
-    assert.equal((await avisar(bueno)).status, 200);
+    assert.equal((await post('/api/pago/tarjeta', { ...bueno, email: 'malo' }, envMp, { origin: BASE })).status, 400);
+    assert.equal((await post('/api/pago/tarjeta', { ...bueno, telefono: '' }, envMp, { origin: BASE })).status, 400);
+    assert.equal((await post('/api/pago/tarjeta', bueno, env, { origin: BASE })).status, 503); // sin token configurado
+    const r = await post('/api/pago/tarjeta', bueno, envMp, { origin: BASE });
+    assert.equal(r.status, 200);
+    assert.equal((await r.json()).url, 'https://mp.test/checkout/abc');
+    const fila = await env.DB.prepare('SELECT id, estado FROM pedidos ORDER BY id DESC LIMIT 1').first();
+    assert.equal(fila.estado, 'pendiente');
+    globalThis.__pedido = String(fila.id);
+    assert.equal(enviados.length, 0); // todavía no pagó
+
+    // Mercado Pago avisa (sin origen, como hace de verdad)
+    assert.equal((await post('/api/mp/webhook?type=payment&data.id=555', {})).status, 200);
     assert.equal(enviados.length, 2);
     const [dueno, cliente] = enviados;
+    assert.equal(dueno.asunto, 'PAGO CON TARJETA APROBADO - PeruCargo');
     assert.equal(dueno.para, 'iamasterperu@gmail.com');
-    assert.match(dueno.asunto, /Aduanas del Sur SAC ya pagó/);
-    assert.equal(cliente.para, 'rosa@aduanas.pe');
+    assert.equal(cliente.para, 'rosa@perucargo.pe');
+    assert.match(cliente.html, /es una inversión/);
     assert.match(cliente.html, /PNG o JPG/);
-    assert.match(cliente.html, /1200 × 150 px/);
     assert.match(cliente.html, /dentro de 2 horas/);
-    assert.match(cliente.html, /link/);
     assert.equal(cliente.pdf_url, `${BASE}/anunciate/Publicidad-ImportaYa.pdf`);
+    // Un segundo aviso del mismo pago no repite los correos
+    enviados.length = 0;
+    await post('/api/mp/webhook?type=payment&data.id=555', {});
+    assert.equal(enviados.length, 0);
+    assert.equal((await env.DB.prepare('SELECT estado FROM pedidos WHERE id = ?').bind(fila.id).first()).estado, 'pagado');
   } finally {
     globalThis.fetch = fetchOriginal;
   }
+});
+
+test('Páginas de gracias, calculadora de IGV y cursos', async () => {
+  assert.match(await (await pedir('/anunciate/gracias?estado=ok')).text(), /Pago recibido/);
+  const igv = await (await pedir('/herramientas/igv')).text();
+  assert.match(igv, /form-igv/);
+  assert.match(igv, /igv\.js/);
+  const cursos = await (await pedir('/herramientas/cursos')).text();
+  for (const s of ['trato-al-cliente', 'manejo-del-rechazo', 'cotizar-y-negociar', 'problemas-habituales']) {
+    assert.match(cursos, new RegExp(`/cursos/${s}\\.pdf`));
+    const r = await pedir(`/cursos/${s}.pdf`);
+    assert.equal(r.status, 200);
+    assert.equal(r.headers.get('content-type'), 'application/pdf');
+    const b = Buffer.from(await r.arrayBuffer());
+    assert.equal(b.subarray(0, 5).toString(), '%PDF-');
+    const paginas = (b.toString('latin1').match(/\/Type \/Page\b(?!s)/g) || []).length;
+    assert.ok(paginas >= 1 && paginas <= 4, `${s}: ${paginas} hojas`);
+  }
+  assert.equal((await pedir('/cursos/no-existe.pdf')).status, 404);
+  const inicio = await (await pedir('/')).text();
+  for (const ruta of ['/calculadora', '/herramientas/carga', '/herramientas/cotizador', '/herramientas/igv', '/herramientas/cursos']) assert.ok(inicio.includes(`href="${ruta}"`), ruta);
+  assert.equal(/importadores y exportadores<\/b> · ambos/.test(inicio), false);
 });
 
 test('La página principal y el PDF dicen que son para importadores y exportadores', async () => {

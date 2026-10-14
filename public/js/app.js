@@ -77,7 +77,6 @@
     });
   }
   enviarFormulario(document.getElementById('form-contacto'), '/api/contacto', '¡Gracias! Si dejaste tu correo, en unos minutos te llegan los precios, el PDF y los datos para pagar (revisa también spam).');
-  enviarFormulario(document.getElementById('form-pago'), '/api/pago', '¡Listo! Te enviamos un correo con el PDF y las instrucciones para mandarnos tu banner (revisa también spam). Tu anuncio sale dentro de 2 horas después de que envíes el archivo.');
   // Botones "Copiar" de los datos de pago
   Array.prototype.forEach.call(document.querySelectorAll('[data-copiar]'), function (b) {
     b.addEventListener('click', function () {
@@ -86,5 +85,58 @@
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(ok, function () {});
     });
   });
+  // Página de pago: voucher por correo (Yape / transferencia) y pago con tarjeta (Mercado Pago)
+  (function () {
+    var form = document.getElementById('form-pago-datos');
+    if (!form) return;
+    var msg = document.getElementById('mensaje-pago');
+    function datos() {
+      var d = {};
+      new FormData(form).forEach(function (v, k) { d[k] = String(v).trim(); });
+      d.espacio = form.dataset.espacio;
+      return d;
+    }
+    function listo() {
+      if (form.reportValidity()) return true;
+      msg.textContent = 'Completa tus datos para continuar.';
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return false;
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('[data-voucher]'), function (b) {
+      b.addEventListener('click', function () {
+        if (!listo()) return;
+        var d = datos();
+        var metodo = b.getAttribute('data-voucher');
+        var asunto = 'PAGO REALIZADO - ' + d.empresa.toUpperCase();
+        var cuerpo = 'Hola, ya realicé el pago de mi publicidad en ImportaYa.\n\n' +
+          'Empresa: ' + d.empresa + '\nNombre: ' + d.nombre + '\nTeléfono: ' + d.telefono + '\nCorreo: ' + d.email + '\n' +
+          'Espacio: ' + form.dataset.espacioNombre + ' (' + form.dataset.medida + ')\nMonto: ' + form.dataset.precio + '\nMétodo: ' + metodo + '\n\n' +
+          '(Adjunto la captura de pantalla del pago)';
+        var ayuda = document.getElementById('voucher-ayuda');
+        document.getElementById('asunto-voucher').textContent = asunto;
+        ayuda.hidden = false;
+        msg.textContent = '';
+        window.location.href = 'mailto:' + form.dataset.correo + '?subject=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(cuerpo);
+        ayuda.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    });
+    var tarjeta = document.getElementById('pagar-tarjeta');
+    if (tarjeta) {
+      tarjeta.addEventListener('click', function () {
+        if (!listo()) return;
+        var original = tarjeta.textContent;
+        tarjeta.disabled = true;
+        tarjeta.textContent = 'Abriendo Mercado Pago…';
+        fetch('/api/pago/tarjeta', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(datos()) })
+          .then(function (r) { return r.json(); })
+          .then(function (r) {
+            if (r.ok && r.url) { window.location.assign(r.url); return; }
+            msg.textContent = r.error || 'No se pudo iniciar el pago con tarjeta.';
+            tarjeta.disabled = false; tarjeta.textContent = original;
+          })
+          .catch(function () { msg.textContent = 'Sin conexión. Inténtalo otra vez.'; tarjeta.disabled = false; tarjeta.textContent = original; });
+      });
+    }
+  })();
   enviarFormulario(document.getElementById('form-directorio'), '/api/directorio', '¡Gracias! Revisaremos los datos de tu empresa y la publicaremos en el directorio.');
 })();

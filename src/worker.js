@@ -11,6 +11,8 @@ import { manejarAdmin } from './api/admin.js';
 import * as publica from './api/publica.js';
 import * as paginas from './paginas/publicas.js';
 import * as herramientas from './paginas/herramientas.js';
+import { CURSO_POR_SLUG } from './lib/cursos.js';
+import { pdfCurso } from './lib/pdf-cursos.js';
 import * as apiHerramientas from './api/herramientas.js';
 import { pdfPublicidad } from './lib/pdf-publicidad.js';
 import { NOMBRE_PDF } from './lib/correos-ventas.js';
@@ -55,6 +57,15 @@ export default {
 
       await asegurarEsquema(env.DB);
 
+      if (ruta === '/api/mp/webhook' && metodo === 'POST') {
+        try {
+          return await publica.webhookMp({ request, env, waitUntil: (pr) => ctx.waitUntil(pr) });
+        } catch (e) {
+          console.error(e);
+          return error('Error.', 500);
+        }
+      }
+
       if (ruta.startsWith('/api/')) {
         if (metodo !== 'GET' && !mismoOrigen(request)) return error('Origen no permitido.', 403);
         try {
@@ -62,7 +73,7 @@ export default {
           const c = { request, env, waitUntil: (p) => ctx.waitUntil(p) };
           if (ruta === '/api/busqueda' && metodo === 'POST') return await publica.busqueda(c);
           if (ruta === '/api/contacto' && metodo === 'POST') return await publica.contacto(c);
-          if (ruta === '/api/pago' && metodo === 'POST') return await publica.pago(c);
+          if (ruta === '/api/pago/tarjeta' && metodo === 'POST') return await publica.pagoTarjeta(c);
           if (ruta === '/api/partidas' && metodo === 'GET') return await apiHerramientas.partidas(c);
           if (ruta === '/api/directorio' && metodo === 'POST') return await apiHerramientas.registrarEmpresa(c);
           return error('No encontrado.', 404);
@@ -93,6 +104,17 @@ export default {
           },
         });
       }
+      let mc;
+      if ((mc = ruta.match(/^\/cursos\/([a-z-]+)\.pdf$/)) && CURSO_POR_SLUG[mc[1]]) {
+        const { bytes } = await pdfCurso(CURSO_POR_SLUG[mc[1]], { sitio: p.base.replace(/^https?:\/\//, ''), cfg });
+        return new Response(bytes, {
+          headers: {
+            'content-type': 'application/pdf',
+            'content-disposition': `attachment; filename="Curso-ImportaYa-${mc[1]}.pdf"`,
+            'cache-control': 'public, max-age=3600',
+          },
+        });
+      }
       if (ruta === '/sitemap.xml') return paginas.sitemap(p);
       if (ruta === '/robots.txt') return paginas.robots(p);
 
@@ -107,12 +129,15 @@ export default {
       else if ((m = ruta.match(/^\/tendencias\/(\d{4}-\d{2})$/))) [respuesta, seccion] = [await paginas.tendencias(p, m[1]), 'tendencias'];
       else if (ruta === '/herramientas') [respuesta, seccion] = [herramientas.inicioHerramientas(p), 'herramientas'];
       else if (ruta === '/herramientas/carga') [respuesta, seccion] = [herramientas.herramientaCarga(p), 'herramientas'];
+      else if (ruta === '/herramientas/igv') [respuesta, seccion] = [herramientas.herramientaIgv(p), 'herramientas'];
+      else if (ruta === '/herramientas/cursos') [respuesta, seccion] = [herramientas.herramientaCursos(p), 'herramientas'];
       else if (ruta === '/herramientas/cotizador') [respuesta, seccion] = [herramientas.herramientaCotizador(p), 'herramientas'];
       else if (ruta === '/herramientas/partidas') [respuesta, seccion] = [herramientas.herramientaPartidas(p), 'herramientas'];
       else if (ruta === '/herramientas/guias') [respuesta, seccion] = [herramientas.herramientaGuias(p), 'herramientas'];
       else if (ruta === '/directorio') [respuesta, seccion] = [await herramientas.directorio(p), 'directorio'];
       else if (ruta === '/anunciate') [respuesta, seccion] = [await paginas.anunciate(p), 'anunciate'];
       else if (ruta === '/anunciate/pagar') [respuesta, seccion] = [paginas.pagar(p), 'anunciate'];
+      else if (ruta === '/anunciate/gracias') [respuesta, seccion] = [paginas.gracias(p), 'anunciate'];
       else if (ruta === '/privacidad') [respuesta, seccion] = [paginas.privacidad(p), 'privacidad'];
       else {
         // Archivos estáticos (favicon, etc.)

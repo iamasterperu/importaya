@@ -6,6 +6,7 @@ import { espacio } from '../lib/anuncios.js';
 import { TIPOS_EMPRESA } from '../lib/aduana.js';
 import { INCOTERMS, CONTENEDORES, ENLACES, DOCUMENTOS, GLOSARIO, CONCEPTOS_COTIZADOR } from '../lib/datos-aduana.js';
 import { pagina } from './plantilla.js';
+import { CURSOS } from '../lib/cursos.js';
 
 const jsonSeguro = (v) => JSON.stringify(v).replace(/</g, '\\u003c');
 
@@ -21,6 +22,8 @@ function conLateral(ctx, principal) {
         <li><a href="/calculadora">Calculadora de impuestos</a></li>
         <li><a href="/herramientas/carga">Calculadoras de carga</a></li>
         <li><a href="/herramientas/cotizador">Cotizador para clientes</a></li>
+        <li><a href="/herramientas/igv">Calculadora de IGV</a></li>
+        <li><a href="/herramientas/cursos">Cursos de ventas gratis</a></li>
         <li><a href="/herramientas/partidas">Buscador de partidas</a></li>
         <li><a href="/herramientas/guias">Guías y enlaces</a></li>
         <li><a href="/directorio">Directorio de empresas</a></li>
@@ -34,6 +37,8 @@ const HERRAMIENTAS = [
   ['/calculadora', '🧮', 'Calculadora de impuestos', 'Ad valorem, IGV, IPM y percepción de una importación, con el dólar del día.'],
   ['/herramientas/carga', '📦', 'Calculadoras de carga', 'CBM, peso volumétrico aéreo, W/M marítimo, contenedores necesarios y conversor de unidades.'],
   ['/herramientas/cotizador', '🧾', 'Cotizador para clientes', 'Arma una cotización con tu nombre, imprímela en PDF o envíala por WhatsApp.'],
+  ['/herramientas/igv', '🧾', 'Calculadora de IGV', 'Agrega o quita el IGV de un precio y calcula el IGV de una importación.'],
+  ['/herramientas/cursos', '🎓', 'Cursos de ventas gratis (PDF)', 'Cuatro guías de ventas para importadores y exportadores: trato al cliente, rechazo, negociación y problemas habituales.'],
   ['/herramientas/partidas', '🔎', 'Buscador de partidas', 'Encuentra la partida arancelaria de un producto y su ad valorem.'],
   ['/herramientas/guias', '📚', 'Guías y enlaces', 'Incoterms 2020, documentos de una importación, glosario y enlaces a SUNAT, VUCE y navieras.'],
   ['/directorio', '🏢', 'Directorio de empresas', 'Importadores, exportadores, agencias de aduana y agentes de carga del Perú.'],
@@ -59,6 +64,61 @@ ${espacio('noticias', ctx.anuncios, ctx.cfg)}`;
       ruta: '/herramientas',
       seccion: 'herramientas',
       cuerpo,
+    })
+  );
+}
+
+// ── Calculadora de IGV ──
+export function herramientaIgv(ctx) {
+  const principal = `
+<h1>🧾 Calculadora de IGV</h1>
+<p class="bajada">Agrega el IGV a un precio, quítalo de un precio que ya lo incluye o calcula el IGV de una importación. En el Perú el IGV es 16 % y se suma el IPM de 2 %: <b>18 % en total</b>.</p>
+<form class="calculadora" id="form-igv" novalidate>
+  <label class="campo">¿Qué quieres calcular?
+    <select name="modo"><option value="agregar">Agregar IGV a un precio sin IGV</option><option value="quitar">Quitar el IGV de un precio con IGV</option><option value="importacion">IGV de una importación</option></select>
+  </label>
+  <label class="campo">Moneda<select name="moneda"><option value="S/">Soles (S/)</option><option value="US$">Dólares (US$)</option></select></label>
+  <label class="campo">Monto (en importación, el valor CIF)<input name="monto" type="number" inputmode="decimal" min="0" step="any" placeholder="1000"></label>
+  <label class="campo">Tasa IGV + IPM (%)<input name="tasa" type="number" inputmode="decimal" min="0" step="0.1" value="18"></label>
+  <label class="campo solo-importacion">Ad valorem (%)<input name="adv" type="number" inputmode="decimal" min="0" step="0.1" value="0"></label>
+  <label class="campo solo-importacion">Otros derechos o ISC (monto)<input name="otros" type="number" inputmode="decimal" min="0" step="any" value="0"></label>
+</form>
+<section id="salida-igv" aria-live="polite"></section>
+<p class="aviso">⚠️ Cálculo de referencia. El IGV de una importación se calcula sobre el valor CIF más los derechos que correspondan; la percepción y otros tributos no se incluyen aquí. Para el cálculo completo usa la <a href="/calculadora">calculadora de impuestos</a>.</p>
+<script src="/js/igv.js?v=1" defer></script>`;
+  return html(
+    pagina(ctx, {
+      titulo: 'Calculadora de IGV: agregar, quitar e IGV de importación',
+      descripcion: 'Calcula gratis el IGV del Perú (18 % con IPM): agrega o quita el IGV de un precio y calcula el IGV de una importación.',
+      ruta: '/herramientas/igv',
+      seccion: 'herramientas',
+      cuerpo: conLateral(ctx, principal),
+    })
+  );
+}
+
+// ── Cursos de ventas (PDF gratis) ──
+export function herramientaCursos(ctx) {
+  const tarjetas = CURSOS.map(
+    (c) => `<article class="curso">
+  <div class="curso-icono" aria-hidden="true">${c.icono}</div>
+  <h3>${esc(c.titulo)}</h3>
+  <p>${esc(c.resumen)}</p>
+  <a class="btn btn-naranja" href="/cursos/${c.slug}.pdf" download>⬇ Descargar PDF gratis</a>
+</article>`
+  ).join('');
+  const principal = `
+<h1>🎓 Cursos de ventas gratis para importadores y exportadores</h1>
+<p class="bajada">Cuatro guías cortas (hasta 4 hojas cada una) con tácticas y técnicas resumidas de los mejores vendedores y negociadores del mundo, en español y pensadas para el día a día del comercio exterior. Descárgalas gratis en PDF.</p>
+<div class="rejilla-cursos">${tarjetas}</div>
+${espacio('noticias', ctx.anuncios, ctx.cfg)}`;
+  return html(
+    pagina(ctx, {
+      titulo: 'Cursos de ventas gratis para importadores y exportadores (PDF)',
+      descripcion: 'Cuatro cursos gratis en PDF: cómo tratar al cliente, manejar el rechazo, cotizar y negociar, y resolver problemas habituales del comercio exterior.',
+      ruta: '/herramientas/cursos',
+      seccion: 'herramientas',
+      cuerpo: conLateral(ctx, principal),
     })
   );
 }
