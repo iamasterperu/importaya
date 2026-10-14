@@ -76,6 +76,6 @@
         .finally(function () { boton.disabled = false; });
     });
   }
-  enviarFormulario(document.getElementById('form-contacto'), '/api/contacto', '¡Gracias! Te escribiremos muy pronto con la propuesta.');
+  enviarFormulario(document.getElementById('form-contacto'), '/api/contacto', '¡Gracias! Si dejaste tu correo, en unos minutos te llegan los precios, el PDF y los datos para pagar (revisa también spam).');
   enviarFormulario(document.getElementById('form-directorio'), '/api/directorio', '¡Gracias! Revisaremos los datos de tu empresa y la publicaremos en el directorio.');
 })();

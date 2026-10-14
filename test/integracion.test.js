@@ -269,3 +269,93 @@ test('Ajustes: se pueden guardar palabras extra y descartadas', async () => {
   assert.equal(config.palabras_extra, 'aguaymanto');
   assert.equal(config.palabras_excluidas, 'bitcoin');
 });
+
+// ── Anúnciate: PDF, esquemas y correos automáticos ──
+test('Anúnciate muestra el esquema de cada espacio y el botón del PDF', async () => {
+  const r = await worker.fetch(new Request(`${BASE}/anunciate`), env, ctx);
+  const h = await r.text();
+  assert.equal(r.status, 200);
+  assert.equal((h.match(/class="mapa-web"/g) || []).length, 6);
+  assert.match(h, /Publicidad-ImportaYa\.pdf/);
+  assert.match(h, /mw-activo/);
+});
+
+test('El PDF de publicidad se descarga con medidas, precios y cuentas', async () => {
+  const r = await worker.fetch(new Request(`${BASE}/anunciate/Publicidad-ImportaYa.pdf`), env, ctx);
+  assert.equal(r.status, 200);
+  assert.equal(r.headers.get('content-type'), 'application/pdf');
+  const b = Buffer.from(await r.arrayBuffer());
+  assert.equal(b.subarray(0, 5).toString(), '%PDF-');
+  assert.match(b.subarray(-8).toString(), /%%EOF/);
+  const texto = b.toString('latin1');
+  assert.match(texto, /1200 \xD7 150 px/);
+  assert.match(texto, /19440084898094/);
+  assert.match(texto, /00219414008489809493/);
+  assert.match(texto, /iamasterperu@gmail\.com/);
+});
+
+test('El formulario avisa al dueño y responde solo con precios, PDF y cuenta (una vez por correo al día)', async () => {
+  const enviados = [];
+  const fetchOriginal = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    if (String(url).startsWith('https://puente.test')) {
+      enviados.push(JSON.parse(init.body));
+      return new Response('{"ok":true}');
+    }
+    return fetchOriginal(url, init);
+  };
+  const envCorreo = { ...env, CORREO_URL: 'https://puente.test/exec', CORREO_CLAVE: 'clave-puente' };
+  const pedidos = [];
+  const ctxEspera = { waitUntil: (p) => pedidos.push(Promise.resolve(p)) };
+  const enviar = async (email) => {
+    const r = await worker.fetch(
+      new Request(`${BASE}/api/contacto`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', origin: BASE, 'cf-connecting-ip': '8.8.4.4' },
+        body: JSON.stringify({ nombre: 'Ana Pérez', empresa: 'Logística SAC', email, telefono: '999111222', espacio: 'lateral', mensaje: 'Quiero precios' }),
+      }),
+      envCorreo,
+      ctxEspera
+    );
+    await Promise.all(pedidos.splice(0));
+    return r;
+  };
+  try {
+    assert.equal((await enviar('ana@ejemplo.com')).status, 200);
+    assert.equal(enviados.length, 2);
+    const [aviso, respuesta] = enviados;
+    assert.equal(aviso.clave, 'clave-puente');
+    assert.equal(aviso.para, 'iamasterperu@gmail.com');
+    assert.match(aviso.asunto, /Formulario web/);
+    assert.match(aviso.html, /página web de ImportaYa/);
+    assert.match(aviso.html, /Ana Pérez/);
+    assert.equal(aviso.responder_a, 'ana@ejemplo.com');
+    assert.equal(respuesta.para, 'ana@ejemplo.com');
+    assert.match(respuesta.html, /19440084898094/);
+    assert.match(respuesta.html, /00219414008489809493/);
+    assert.match(respuesta.html, /S\/ 400 al mes/);
+    assert.match(respuesta.html, /voucher/);
+    assert.match(respuesta.html, /logo-importaya\.png/);
+    assert.equal(respuesta.pdf_url, `${BASE}/anunciate/Publicidad-ImportaYa.pdf`);
+    // El mismo correo otra vez: solo se avisa al dueño, no se repite la respuesta automática
+    enviados.length = 0;
+    await enviar('ana@ejemplo.com');
+    assert.equal(enviados.length, 1);
+    assert.equal(enviados[0].para, 'iamasterperu@gmail.com');
+  } finally {
+    globalThis.fetch = fetchOriginal;
+  }
+});
+
+test('Sin puente de correo configurado, el mensaje igual se guarda', async () => {
+  const r = await worker.fetch(
+    new Request(`${BASE}/api/contacto`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', origin: BASE, 'cf-connecting-ip': '8.8.8.9' },
+      body: JSON.stringify({ nombre: 'Luis', email: 'luis@ejemplo.com', mensaje: 'Hola' }),
+    }),
+    env,
+    ctx
+  );
+  assert.equal(r.status, 200);
+});
