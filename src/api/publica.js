@@ -3,7 +3,7 @@ import { json, error, leerJson, ipCliente, permitir, ahoraIso, fechaLima, mesLim
 import { terminoLimpio } from '../lib/texto.js';
 import { ESPACIOS } from '../lib/anuncios.js';
 import { leerConfig } from '../lib/config.js';
-import { avisarContacto } from '../lib/correos-ventas.js';
+import { avisarContacto, avisarPago } from '../lib/correos-ventas.js';
 
 export function registrarBusqueda(db, termino, tipo) {
   return db
@@ -51,6 +51,33 @@ export async function contacto(ctx) {
   const datos = { nombre, empresa: limpio(d.empresa, 100), email, telefono, espacio, mensaje: limpio(d.mensaje, 1000) };
   const origen = new URL(request.url).origin;
   ctx.waitUntil(leerConfig(env.DB).then((cfg) => avisarContacto(env, cfg, datos, origen)).catch((e) => console.error(e)));
+  return json({ ok: true });
+}
+
+// POST /api/pago  ("Ya pagué": avisa al dueño y confirma al anunciante)
+export async function pago(ctx) {
+  const { request, env } = ctx;
+  const d = await leerJson(request);
+  if (!d) return error('Datos no válidos.');
+  if (d.web) return json({ ok: true });
+  const limpio = (v, max) => String(v || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, max);
+  const nombre = limpio(d.nombre, 80);
+  const empresa = limpio(d.empresa, 100);
+  const email = limpio(d.email, 120);
+  if (nombre.length < 2) return error('Escribe tu nombre.');
+  if (empresa.length < 2) return error('Escribe el nombre de tu empresa.');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return error('Escribe un correo válido: ahí te enviamos la confirmación.');
+  if (!ESPACIOS[d.espacio]) return error('Elige el espacio que pagaste.');
+  const metodo = d.metodo === 'transferencia' ? 'transferencia' : 'yape';
+  if (!(await permitir(env.DB, `pago:${ipCliente(request)}`, 5, 3600))) {
+    return error('Recibimos varios avisos desde tu conexión. Inténtalo más tarde.', 429);
+  }
+  const datos = { nombre, empresa, email, telefono: limpio(d.telefono, 30), espacio: d.espacio, metodo, operacion: limpio(d.operacion, 40) };
+  await env.DB.prepare('INSERT INTO pagos (nombre, empresa, email, telefono, espacio, metodo, operacion, creado) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(datos.nombre, datos.empresa, datos.email, datos.telefono, datos.espacio, datos.metodo, datos.operacion, ahoraIso())
+    .run();
+  const origen = new URL(request.url).origin;
+  ctx.waitUntil(leerConfig(env.DB).then((cfg) => avisarPago(env, cfg, datos, origen)).catch((e) => console.error(e)));
   return json({ ok: true });
 }
 

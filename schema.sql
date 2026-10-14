@@ -190,3 +190,16 @@ CREATE TABLE IF NOT EXISTS empresas (
   creado TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_empresas_estado ON empresas (estado, razon_social);
+
+-- Avisos de pago de anunciantes ("Ya pagué").
+CREATE TABLE IF NOT EXISTS pagos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT NOT NULL,
+  empresa TEXT NOT NULL,
+  email TEXT NOT NULL,
+  telefono TEXT,
+  espacio TEXT,
+  metodo TEXT NOT NULL,                      -- yape / transferencia
+  operacion TEXT,                            -- número de operación o referencia
+  creado TEXT NOT NULL
+);
