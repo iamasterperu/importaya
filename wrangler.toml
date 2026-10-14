@@ -1,0 +1,51 @@
+# Configuración del Worker de Cloudflare para ImportaYa
+# Guía completa paso a paso en README.md
+#
+# IMPORTANTE: "name" debe ser igual al nombre de tu Worker en el panel de Cloudflare.
+name = "importaya"
+main = "src/worker.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "none"
+html_handling = "auto-trailing-slash"
+# El Worker arma las páginas (noticias, videos, calculadora...). Cloudflare sirve
+# directamente los archivos estáticos (estilos, scripts, imágenes): más rápido y gratis.
+run_worker_first = [
+  "/*",
+  "!/css/*",
+  "!/js/*",
+  "!/assets/*",
+]
+
+# Tareas automáticas: se ejecutan cada 15 minutos y se reparten así:
+#   minuto 00 y 30 → noticias (Perú, China y el mundo)
+#   minuto 15      → videos de YouTube
+#   minuto 45      → resúmenes con IA, tipo de cambio, ranking mensual y limpieza
+[triggers]
+crons = ["*/15 * * * *"]
+
+# Inteligencia artificial de Cloudflare (Workers AI). Tiene un uso GRATIS cada día
+# y no necesita clave ni tarjeta. Se usa para resumir y traducir las noticias.
+[ai]
+binding = "AI"
+
+# Variables públicas (no secretas). Lo demás se cambia desde tu panel /admin.
+# Los secretos (ADMIN_PASSWORD y, opcional, GEMINI_API_KEY) se agregan en el
+# panel de Cloudflare, nunca aquí (ver README).
+[vars]
+SITE_NAME = "ImportaYa"
+SITE_URL = ""                     # vacío = se usa la dirección de la visita. Ej.: "https://importaya.pe"
+AI_MODEL = "@cf/meta/llama-3.1-8b-instruct"
+GEMINI_MODEL = "gemini-2.5-flash" # solo se usa si agregas el secreto GEMINI_API_KEY
+
+[[d1_databases]]
+binding = "DB"
+database_name = "importaya-db"
+database_id = "PEGA-AQUI-EL-DATABASE-ID"   # ← paso 2 del README
+
+[observability]
+enabled = true

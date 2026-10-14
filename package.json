@@ -1,0 +1,15 @@
+{
+  "name": "importaya",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "ImportaYa — noticias de importación, tipo de cambio y calculadora de impuestos (Cloudflare Worker + D1 + Workers AI)",
+  "scripts": {
+    "dev": "wrangler dev --test-scheduled",
+    "deploy": "wrangler deploy",
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

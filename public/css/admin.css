@@ -1,0 +1,32 @@
+/* Panel de administración */
+.admin main { padding-top: 16px; }
+.login { max-width: 380px; margin: 40px auto; }
+.login form { display: flex; flex-direction: column; gap: 12px; }
+.login label, .admin-form label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 0.9rem; }
+.error { color: #c0392b; min-height: 1.2em; margin: 0; }
+.tarjetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.tarjetas div { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 14px; }
+.tarjetas b { display: block; font-size: 1.6rem; color: var(--naranja); }
+.tarjetas span { color: var(--suave); font-size: 0.85rem; }
+.tarjetas .alerta b { color: #c0392b; }
+.tabla-env { overflow-x: auto; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; margin-bottom: 18px; }
+.tabla { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.tabla th, .tabla td { padding: 8px 10px; border-bottom: 1px solid var(--borde); text-align: left; vertical-align: top; }
+.tabla th { background: var(--fondo); font-size: 0.8rem; text-transform: uppercase; letter-spacing: .03em; color: var(--suave); }
+.tabla tr.apagado td { opacity: 0.55; }
+.tabla .acciones { white-space: nowrap; }
+.tabla .acciones button, .mini { font: inherit; font-size: 0.8rem; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--borde); background: var(--tarjeta); color: var(--texto); cursor: pointer; margin: 2px; }
+.mini.peligro { color: #c0392b; border-color: rgba(192,57,43,.4); }
+.estado-ok { color: var(--verde); font-weight: 700; }
+.estado-error { color: #c0392b; font-weight: 700; }
+.admin-form { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 16px; margin-bottom: 18px; }
+.admin-form .ancho { grid-column: 1 / -1; }
+.admin-form .check { flex-direction: row; align-items: center; gap: 8px; }
+.admin-form .check input { width: auto; }
+.admin-form .botones { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
+.miniatura { max-width: 160px; max-height: 70px; border-radius: 6px; }
+.barras { display: flex; align-items: flex-end; gap: 3px; height: 120px; background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 12px; padding: 12px; margin-bottom: 18px; }
+.barras span { flex: 1; background: var(--naranja); border-radius: 3px 3px 0 0; min-height: 2px; }
+.ayuda { color: var(--suave); font-size: 0.9rem; }
+.aviso-flotante { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--azul); color: #fff; padding: 10px 18px; border-radius: 999px; box-shadow: 0 4px 20px rgba(0,0,0,.25); z-index: 50; max-width: calc(100% - 32px); }
+.fila-titulo { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }

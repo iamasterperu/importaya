@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Panel ImportaYa</title>
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/estilos.css?v=1">
+<link rel="stylesheet" href="/css/admin.css?v=1">
+</head>
+<body class="admin">
+<header class="cabecera">
+  <div class="contenedor cabecera-fila">
+    <a class="logo" href="/" target="_blank" rel="noopener"><span>Importa<b>Ya</b> · Panel</span></a>
+    <button class="btn btn-claro" id="salir" hidden type="button">Salir</button>
+  </div>
+</header>
+
+<main class="contenedor">
+  <section id="login" class="caja login" hidden>
+    <h1>Ingresar al panel</h1>
+    <form id="form-login">
+      <label>Contraseña<input type="password" name="password" required autocomplete="current-password"></label>
+      <button class="btn btn-naranja btn-bloque" type="submit">Ingresar</button>
+      <p class="error" role="alert"></p>
+    </form>
+  </section>
+
+  <div id="panel" hidden>
+    <nav class="pestanas pestanas-scroll" id="pestanas">
+      <a href="#resumen">Resumen</a>
+      <a href="#publicidad">Publicidad</a>
+      <a href="#noticias">Noticias</a>
+      <a href="#fuentes">Fuentes de noticias</a>
+      <a href="#youtube">YouTube</a>
+      <a href="#busquedas">Lo más buscado</a>
+      <a href="#contactos">Anunciantes</a>
+      <a href="#ajustes">Ajustes</a>
+    </nav>
+    <div id="vista"></div>
+  </div>
+</main>
+<div id="aviso" class="aviso-flotante" role="status" hidden></div>
+<script src="/js/admin.js?v=1" defer></script>
+</body>
+</html>
