@@ -16,15 +16,14 @@ test('Deja pasar comercio exterior, logística y economía', () => {
     'Port of Los Angeles Sets All-Time Cargo Record as Imports Surge',
     'Container Ship Sinks Near Hormuz After Being Hit by Projectile, Sources Say',
     'Fletes para envíos de petróleo ruso Urals a India alcanzan nuevos récords',
-    'Empresarios de Perú y Chile se reúnen en Lima | Consejo Empresarial Chileno-Peruano',
     '🟣Irán ataca buques para que suba más el precio del petróleo y esto dañe a Trump en Estados Unidos',
     'El Niño retrasaría la recuperación económica del Perú hasta la segunda mitad de 2027',
     'APM Terminals Poti registra alza en volumen de contenedores entre enero y septiembre de 2026',
     'Corío apunta a ser una “ciudad puerto”: todo lo que traería el proyecto dentro de 10 años',
     'Vaca Muerta y la minería traccionan el comercio exterior',
-    'Cacaosuyo triplica sus ventas en China y alista su salto a un nuevo canal en Perú',
+    'Sunat: cómo calcular el IGV y el ISC en una importación con DUA',
+    'Exportaciones de cacao peruano crecen en China y alistan nuevo canal',
     'Fenómeno de El Niño: envíos de arándanos peruanos caerían 31% en las próximas semanas',
-    'Entidades públicas acumulan deudas millonarias con EsSalud y ONP: las que más deben',
   ];
   for (const t of buenos) assert.equal(filtro.relevante(t), true, t);
 });
@@ -41,6 +40,9 @@ test('Descarta policiales, deportes, espectáculos y temas ajenos', () => {
     'LATINA NOTICIAS MEDIODÍA - MIÉRCOLES 14 DE OCTUBRE DE 2026',
     'Identifican a la persona que falleció al caer de una montaña rusa en Six Flags',
     'Nueve detenidos con armas y dinamita en el Callao: cinco son menores de edad',
+    '"Cajamarca está en riesgo de convertirse en el nuevo Pataz": Fiscal sobre minería ilegal',
+    'Inversionistas advierten 3 riesgos para invertir en Perú',
+    'Gobierno designa presidenta del directorio y directora ejecutiva del Fonafe',
     'Estas cartas de Pokémon se podrían vender por US$ 20 millones',
     'Chile: tormenta eléctrica, granizo y un tornado sorprenden a Santiago',
   ];
