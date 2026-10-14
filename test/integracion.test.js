@@ -181,6 +181,21 @@ test('Directorio: valida, queda pendiente, se publica al aprobar y no muestra el
   assert.ok(html.includes('Agencia Pacífico S.A.C.'));
 });
 
+test('Directorio: el administrador importa empresas y se buscan por RUC o por nombre', async () => {
+  const lineas = '20100070970;SUPERMERCADOS PERUANOS S.A.;importador;Retail;Lima;;;alimentos\n20131312955;AGRO EXPORT DEL SUR S.A.C.;exportador;Agro;Ica;987654321;agroexport.pe;uvas y paltas\n12345;MAL RUC;importador;;;;;\n';
+  const r = await (await admin('empresas-importar', { texto: lineas })).json();
+  assert.equal(r.guardadas, 2);
+  assert.equal(r.descartadas, 1);
+  let html = await (await pedir('/directorio?q=20131312955')).text();
+  assert.ok(html.includes('AGRO EXPORT DEL SUR'));
+  assert.equal(html.includes('SUPERMERCADOS PERUANOS'), false);
+  html = await (await pedir('/directorio?q=201000')).text(); // primeros dígitos del RUC
+  assert.ok(html.includes('SUPERMERCADOS PERUANOS'));
+  html = await (await pedir('/directorio?q=agro%20export')).text(); // por nombre
+  assert.ok(html.includes('AGRO EXPORT DEL SUR'));
+  assert.match(html, /importadoras y exportadoras/);
+});
+
 test('Directorio: la trampa para robots y un cuerpo roto no guardan nada', async () => {
   const r = await pedir('/api/directorio', { metodo: 'POST', cuerpo: { razon_social: 'Spam', ruc: '20100070970', tipo: 'importador', email: 'a@b.pe', autorizo: true, sitio_extra: 'x' } });
   assert.equal((await r.json()).ok, true);
@@ -193,7 +208,7 @@ test('Directorio: la trampa para robots y un cuerpo roto no guardan nada', async
 test('Las acciones del panel exigen sesión', async () => {
   const guardada = cookie;
   cookie = '';
-  for (const ruta of ['partidas-importar', 'empresas-estado', 'empresas-borrar', 'partidas-vaciar']) {
+  for (const ruta of ['partidas-importar', 'empresas-estado', 'empresas-borrar', 'partidas-vaciar', 'empresas-importar']) {
     const r = await admin(ruta, { id: 1, estado: 'aprobada', texto: 'x' });
     assert.equal(r.status, 401, ruta);
   }
@@ -334,7 +349,10 @@ test('El formulario avisa al dueño y responde solo con precios, PDF y cuenta (u
     assert.match(respuesta.html, /19440084898094/);
     assert.match(respuesta.html, /00219414008489809493/);
     assert.match(respuesta.html, /S\/ 400 al mes/);
-    assert.match(respuesta.html, /voucher/);
+    assert.match(respuesta.html, /anunciate\/pagar/);
+    assert.match(respuesta.html, /992644771/);
+    assert.match(respuesta.html, /yape-color\.png/);
+    assert.match(respuesta.html, /bcp-color\.png/);
     assert.match(respuesta.html, /logo-importaya\.png/);
     assert.equal(respuesta.pdf_url, `${BASE}/anunciate/Publicidad-ImportaYa.pdf`);
     // El mismo correo otra vez: solo se avisa al dueño, no se repite la respuesta automática
@@ -358,4 +376,62 @@ test('Sin puente de correo configurado, el mensaje igual se guarda', async () =>
     ctx
   );
   assert.equal(r.status, 200);
+});
+
+test('Pagar: la página muestra Yape y BCP, y "Ya pagué" avisa al dueño y confirma al cliente', async () => {
+  const pagina = await (await pedir('/anunciate/pagar')).text();
+  assert.match(pagina, /992644771/);
+  assert.match(pagina, /19440084898094/);
+  assert.match(pagina, /00219414008489809493/);
+  assert.match(pagina, /yape-qr\.png/);
+  assert.match(pagina, /bcp-azul\.png/);
+
+  const enviados = [];
+  const fetchOriginal = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    if (String(url).startsWith('https://puente.test')) {
+      enviados.push(JSON.parse(init.body));
+      return new Response('{"ok":true}');
+    }
+    return fetchOriginal(url, init);
+  };
+  const envCorreo = { ...env, CORREO_URL: 'https://puente.test/exec', CORREO_CLAVE: 'clave-puente' };
+  const pedidos = [];
+  const ctxEspera = { waitUntil: (p) => pedidos.push(Promise.resolve(p)) };
+  const avisar = async (cuerpo) => {
+    const r = await worker.fetch(
+      new Request(`${BASE}/api/pago`, { method: 'POST', headers: { 'content-type': 'application/json', origin: BASE, 'cf-connecting-ip': '7.7.7.7' }, body: JSON.stringify(cuerpo) }),
+      envCorreo,
+      ctxEspera
+    );
+    await Promise.all(pedidos.splice(0));
+    return r;
+  };
+  try {
+    const bueno = { nombre: 'Rosa Díaz', empresa: 'Aduanas del Sur SAC', email: 'rosa@aduanas.pe', telefono: '999000111', espacio: 'cabecera', metodo: 'yape', operacion: '123456' };
+    assert.equal((await avisar({ ...bueno, email: 'malo' })).status, 400);
+    assert.equal((await avisar({ ...bueno, espacio: 'x' })).status, 400);
+    assert.equal(enviados.length, 0);
+    assert.equal((await avisar(bueno)).status, 200);
+    assert.equal(enviados.length, 2);
+    const [dueno, cliente] = enviados;
+    assert.equal(dueno.para, 'iamasterperu@gmail.com');
+    assert.match(dueno.asunto, /Aduanas del Sur SAC ya pagó/);
+    assert.equal(cliente.para, 'rosa@aduanas.pe');
+    assert.match(cliente.html, /PNG o JPG/);
+    assert.match(cliente.html, /1200 × 150 px/);
+    assert.match(cliente.html, /dentro de 2 horas/);
+    assert.match(cliente.html, /link/);
+    assert.equal(cliente.pdf_url, `${BASE}/anunciate/Publicidad-ImportaYa.pdf`);
+  } finally {
+    globalThis.fetch = fetchOriginal;
+  }
+});
+
+test('La página principal y el PDF dicen que son para importadores y exportadores', async () => {
+  const h = await (await pedir('/')).text();
+  assert.match(h, /importadores y exportadores/);
+  const pdf = Buffer.from(await (await pedir('/anunciate/Publicidad-ImportaYa.pdf')).arrayBuffer()).toString('latin1');
+  assert.match(pdf, /importadores y exportadores/);
+  assert.match(pdf, /992644771/);
 });

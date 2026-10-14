@@ -75,4 +75,5 @@ export const CONFIG = {
   cuenta_bcp: '19440084898094',
   cuenta_cci: '00219414008489809493',
   correo_ventas: 'iamasterperu@gmail.com',
+  yape_numero: '992644771',
 };

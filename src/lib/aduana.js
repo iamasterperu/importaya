@@ -18,6 +18,28 @@ export function rucEmpresa(ruc) {
   return rucValido(ruc) && String(ruc).startsWith('20');
 }
 
+// Importación masiva de empresas: ruc ; razón social ; tipo ; rubro ; ciudad ; teléfono ; web ; productos
+// (tipo: importador / exportador / ambos / agencia / carga; si falta o no se entiende, queda como "ambos").
+export function parsearEmpresas(texto) {
+  const filas = [];
+  let descartadas = 0;
+  const limpio = (v, max) => recortar(String(v || '').replace(/[\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim(), max);
+  for (const linea of String(texto || '').split(/\r?\n/)) {
+    if (!linea.trim()) continue;
+    const c = linea.split(/[;\t|]/).map((x) => x.trim().replace(/^"|"$/g, ''));
+    const ruc = soloDigitos(c[0]);
+    const razon = limpio(c[1], 120);
+    if (!rucValido(ruc) || razon.length < 3) {
+      descartadas++;
+      continue;
+    }
+    const t = String(c[2] || '').toLowerCase();
+    const tipo = TIPOS_EMPRESA[t] ? t : /export/.test(t) && /import/.test(t) ? 'ambos' : /export/.test(t) ? 'exportador' : /import/.test(t) ? 'importador' : 'ambos';
+    filas.push({ ruc, razon_social: razon, tipo, rubro: limpio(c[3], 80), ciudad: limpio(c[4], 60), telefono: limpio(c[5], 30), web: limpio(c[6], 200), productos: limpio(c[7], 200) });
+  }
+  return { filas, descartadas };
+}
+
 export const TIPOS_EMPRESA = {
   importador: 'Importador',
   exportador: 'Exportador',

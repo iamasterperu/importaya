@@ -1,6 +1,11 @@
 // Generador mínimo de PDF (sin librerías): texto, rectángulos, líneas y una imagen.
 // Usa las fuentes básicas de PDF (Helvetica), así que no hace falta incluir tipografías.
 import { LOGO_PDF } from './logo-pdf.js';
+import { IMAGENES_PDF } from './imagenes-pdf.js';
+
+// Imágenes disponibles (todas RGB comprimidas con zlib).
+const IMAGENES = { Logo: LOGO_PDF, Bcp: IMAGENES_PDF.bcp, BcpAzul: IMAGENES_PDF.bcpAzul, Yape: IMAGENES_PDF.yape, YapeQr: IMAGENES_PDF.yapeQr };
+const NOMBRES_IMG = Object.keys(IMAGENES);
 
 // Anchos de Helvetica (por 1000) para los caracteres ASCII 32 a 126.
 const ANCHOS = [278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
@@ -108,14 +113,18 @@ export class Pdf {
     }
     return Y;
   }
-  logo(x, y, w) {
-    const h = (LOGO_PDF.alto / LOGO_PDF.ancho) * w;
-    this.ops.push(`q ${num(w)} 0 0 ${num(h)} ${num(x)} ${num(this.alto - y - h)} cm /Logo Do Q`);
+  // Dibuja una imagen por nombre (Logo, Bcp, BcpAzul, Yape, YapeQr). Devuelve el alto usado.
+  imagen(nombre, x, y, w) {
+    const img = IMAGENES[nombre];
+    const h = (img.alto / img.ancho) * w;
+    this.ops.push(`q ${num(w)} 0 0 ${num(h)} ${num(x)} ${num(this.alto - y - h)} cm /${nombre} Do Q`);
     return h;
+  }
+  logo(x, y, w) {
+    return this.imagen('Logo', x, y, w);
   }
 
   async generar({ titulo = 'ImportaYa', autor = 'ImportaYa' } = {}) {
-    const enc = new TextEncoder();
     const partes = [];
     const offsets = [];
     let largo = 0;
@@ -126,25 +135,31 @@ export class Pdf {
     };
     const objeto = (n, cuerpo) => { offsets[n] = largo; agregar(`${n} 0 obj\n`); agregar(cuerpo); agregar('\nendobj\n'); };
 
-    const datosLogo = await descomprimirBase64(LOGO_PDF.datos);
-    // Numeración: 1 catálogo, 2 páginas, 3 F1, 4 F2, 5 logo, luego (contenido, página) por cada página
+    // Numeración: 1 catálogo, 2 páginas, 3 F1, 4 F2, 5.. imágenes, luego (contenido, página) por cada página
     const nPag = this.paginas.length;
-    const ids = this.paginas.map((_, i) => ({ cont: 6 + i * 2, pag: 7 + i * 2 }));
-    const infoId = 6 + nPag * 2;
+    const primeraImg = 5;
+    const primeraPag = primeraImg + NOMBRES_IMG.length;
+    const ids = this.paginas.map((_, i) => ({ cont: primeraPag + i * 2, pag: primeraPag + i * 2 + 1 }));
+    const infoId = primeraPag + nPag * 2;
     agregar('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
     objeto(1, '<< /Type /Catalog /Pages 2 0 R >>');
     objeto(2, `<< /Type /Pages /Kids [${ids.map((i) => `${i.pag} 0 R`).join(' ')}] /Count ${nPag} >>`);
     objeto(3, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>');
     objeto(4, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
-    // La imagen: bytes ya comprimidos con zlib (FlateDecode)
-    offsets[5] = largo;
-    agregar(`5 0 obj\n<< /Type /XObject /Subtype /Image /Width ${LOGO_PDF.ancho} /Height ${LOGO_PDF.alto} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /Length ${datosLogo.length} >>\nstream\n`);
-    agregar(datosLogo);
-    agregar('\nendstream\nendobj\n');
+    // Imágenes: bytes ya comprimidos con zlib (FlateDecode)
+    NOMBRES_IMG.forEach((nombre, i) => {
+      const img = IMAGENES[nombre];
+      const datos = base64ABytes(img.datos);
+      offsets[primeraImg + i] = largo;
+      agregar(`${primeraImg + i} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${img.ancho} /Height ${img.alto} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /FlateDecode /Length ${datos.length} >>\nstream\n`);
+      agregar(datos);
+      agregar('\nendstream\nendobj\n');
+    });
+    const recursosImg = NOMBRES_IMG.map((n, i) => `/${n} ${primeraImg + i} 0 R`).join(' ');
     this.paginas.forEach((ops, i) => {
       const flujo = ops.join('\n');
       objeto(ids[i].cont, `<< /Length ${latin1(flujo).length} >>\nstream\n${flujo}\nendstream`);
-      objeto(ids[i].pag, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${num(this.ancho)} ${num(this.alto)}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> /XObject << /Logo 5 0 R >> >> /Contents ${ids[i].cont} 0 R >>`);
+      objeto(ids[i].pag, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${num(this.ancho)} ${num(this.alto)}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> /XObject << ${recursosImg} >> >> /Contents ${ids[i].cont} 0 R >>`);
     });
     objeto(infoId, `<< /Title (${cadena(titulo)}) /Author (${cadena(autor)}) /Producer (ImportaYa) >>`);
     const xref = largo;
@@ -165,8 +180,8 @@ function latin1(texto) {
   return b;
 }
 
-// Los datos del logo ya están en zlib (lo que pide FlateDecode): solo se pasa de base64 a bytes.
-async function descomprimirBase64(b64) {
+// Los datos de las imágenes ya están en zlib (lo que pide FlateDecode): solo se pasa de base64 a bytes.
+function base64ABytes(b64) {
   const bin = atob(b64);
   const b = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);

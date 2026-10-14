@@ -464,7 +464,37 @@
       vista.innerHTML =
         '<h2>Directorio de empresas</h2>' +
         '<p class="ayuda">Las empresas se registran en <a href="/directorio" target="_blank">el directorio</a> y quedan <b>pendientes</b>. Revisa el RUC en la SUNAT antes de pulsar “Publicar”: solo las publicadas se ven en la web. El correo nunca se muestra al público.</p>' +
+        '<form class="admin-form" id="form-empresas">' +
+        '<h3 class="ancho">Cargar empresas en bloque</h3>' +
+        '<p class="ancho ayuda">Sube un CSV o pega líneas con: <code>RUC ; razón social ; tipo ; rubro ; ciudad ; teléfono ; web ; productos</code>. El tipo puede ser importador, exportador, ambos, agencia o carga. Las empresas cargadas aquí se publican de inmediato y se pueden buscar por RUC o nombre. Si el RUC ya existe, se actualiza.</p>' +
+        '<label class="ancho">Archivo<input type="file" name="archivo" accept=".csv,.txt,.tsv,text/plain,text/csv"></label>' +
+        '<label class="ancho">…o pega las líneas aquí<textarea name="texto" rows="5" placeholder="20123456789;EMPRESA EJEMPLO S.A.C.;importador;Repuestos;Lima;987654321;www.ejemplo.pe;autopartes"></textarea></label>' +
+        '<div class="botones"><button class="btn btn-naranja" type="submit">Cargar empresas</button></div>' +
+        '<p class="ancho ayuda" id="progreso-empresas" role="status"></p></form>' +
         '<div class="tabla-env"><table class="tabla"><thead><tr><th>Estado</th><th>Empresa</th><th>Detalle</th><th>Contacto</th><th></th></tr></thead><tbody>' + (filas || '<tr><td colspan="5">Todavía no se registró ninguna empresa.</td></tr>') + '</tbody></table></div>';
+      document.getElementById('form-empresas').onsubmit = function (e) {
+        e.preventDefault();
+        var f = e.target;
+        var archivo = f.archivo.files[0];
+        var leer = archivo ? archivo.text() : Promise.resolve(f.texto.value);
+        var boton = f.querySelector('button[type="submit"]');
+        var prog = document.getElementById('progreso-empresas');
+        boton.disabled = true;
+        leer.then(function (texto) {
+          var lineas = texto.split(/\r?\n/).filter(function (l) { return l.trim(); });
+          if (!lineas.length) throw new Error('No hay líneas para cargar.');
+          var guardadas = 0, descartadas = 0, i = 0;
+          function siguiente() {
+            if (i >= lineas.length) { aviso(guardadas + ' empresas cargadas' + (descartadas ? ' (' + descartadas + ' líneas ignoradas)' : '')); return directorio(); }
+            return api('empresas-importar', { texto: lineas.slice(i, i + 300).join('\n') }).then(function (r) {
+              guardadas += r.guardadas; descartadas += r.descartadas; i += 300;
+              prog.textContent = 'Cargando… ' + Math.min(i, lineas.length) + ' de ' + lineas.length + ' líneas';
+              return siguiente();
+            });
+          }
+          return siguiente();
+        }).catch(function (x) { aviso(x.message); prog.textContent = x.message; }).finally(function () { boton.disabled = false; });
+      };
     });
   }
 

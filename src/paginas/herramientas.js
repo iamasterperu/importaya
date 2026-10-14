@@ -54,7 +54,7 @@ export function inicioHerramientas(ctx) {
 ${espacio('noticias', ctx.anuncios, ctx.cfg)}`;
   return html(
     pagina(ctx, {
-      titulo: 'Herramientas para agencias de aduana e importadores',
+      titulo: 'Herramientas para importadores, exportadores y agencias de aduana',
       descripcion: 'Calculadoras de carga, cotizador para clientes, buscador de partidas arancelarias, Incoterms y directorio de empresas de comercio exterior del Perú.',
       ruta: '/herramientas',
       seccion: 'herramientas',
@@ -262,9 +262,16 @@ export async function directorio(ctx) {
   const vals = [];
   if (tipo) { donde.push('tipo = ?'); vals.push(tipo); }
   if (q) {
-    donde.push('(razon_social LIKE ? OR rubro LIKE ? OR productos LIKE ? OR ciudad LIKE ?)');
-    const like = `%${q.replace(/[%_]/g, '')}%`;
-    vals.push(like, like, like, like);
+    const limpio = q.replace(/[%_]/g, '');
+    if (/^\d{4,}$/.test(limpio)) {
+      // Solo números: se busca por RUC (completo o los primeros dígitos)
+      donde.push('ruc LIKE ?');
+      vals.push(`${limpio}%`);
+    } else {
+      donde.push('(razon_social LIKE ? OR rubro LIKE ? OR productos LIKE ? OR ciudad LIKE ?)');
+      const like = `%${limpio}%`;
+      vals.push(like, like, like, like);
+    }
   }
   const { results } = await db
     .prepare(`SELECT id, ruc, razon_social, tipo, rubro, productos, ciudad, web, telefono, descripcion FROM empresas WHERE ${donde.join(' AND ')} ORDER BY razon_social COLLATE NOCASE LIMIT ? OFFSET ?`)
@@ -299,14 +306,14 @@ export async function directorio(ctx) {
   const tiposOpciones = Object.entries(TIPOS_EMPRESA).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
   const principal = `
 <h1>🏢 Directorio de empresas de comercio exterior</h1>
-<p class="bajada">Importadores, exportadores, agencias de aduana y agentes de carga del Perú. ¿Tu empresa no está? <a href="#registrar">Regístrala gratis</a>.</p>
+<p class="bajada">Empresas <b>importadoras y exportadoras</b> del Perú, agencias de aduana y agentes de carga. Búscalas por <b>RUC</b> o por <b>nombre</b>. ¿Tu empresa no está? <a href="#registrar">Regístrala gratis</a>.</p>
 <form class="buscador" action="/directorio" method="get" role="search">
   ${tipo ? `<input type="hidden" name="tipo" value="${esc(tipo)}">` : ''}
-  <input type="search" name="q" value="${esc(q)}" placeholder="Buscar empresa, rubro, producto o ciudad…" aria-label="Buscar en el directorio" maxlength="60">
+  <input type="search" name="q" value="${esc(q)}" placeholder="Buscar por RUC o nombre de la empresa…" aria-label="Buscar empresas por RUC o nombre" maxlength="60" inputmode="search">
   <button class="btn btn-naranja" type="submit">Buscar</button>
 </form>
 <nav class="pestanas pestanas-scroll">${pestana(null, 'Todas')}${Object.entries(TIPOS_EMPRESA).map(([k, v]) => pestana(k, v)).join('')}</nav>
-<div class="lista-empresas">${tarjetas || '<p class="vacio">Todavía no hay empresas publicadas aquí. ¡Sé la primera en registrarte!</p>'}</div>
+<div class="lista-empresas">${tarjetas || (q ? '<p class="vacio">No encontramos empresas con esa búsqueda. Prueba con otro nombre o con el RUC, o regístrala gratis abajo.</p>' : '<p class="vacio">Todavía no hay empresas publicadas aquí. ¡Sé la primera en registrarte!</p>')}</div>
 <nav class="paginacion">
   ${p > 1 ? `<a class="btn btn-claro" href="/directorio${params(p - 1 > 1 ? { p: p - 1 } : {})}">← Anteriores</a>` : '<span></span>'}
   ${hayMas ? `<a class="btn btn-claro" href="/directorio${params({ p: p + 1 })}">Siguientes →</a>` : ''}
@@ -335,7 +342,7 @@ export async function directorio(ctx) {
   return html(
     pagina(ctx, {
       titulo: 'Directorio de empresas importadoras y exportadoras del Perú',
-      descripcion: 'Directorio gratuito de importadores, exportadores, agencias de aduana y agentes de carga del Perú. Busca por rubro, producto o ciudad.',
+      descripcion: 'Directorio gratuito de importadores, exportadores, agencias de aduana y agentes de carga del Perú. Busca por RUC o nombre.',
       ruta: '/directorio' + params(p > 1 ? { p } : {}),
       seccion: 'herramientas',
       cuerpo: conLateral(ctx, principal),

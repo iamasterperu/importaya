@@ -62,6 +62,7 @@ export default {
           const c = { request, env, waitUntil: (p) => ctx.waitUntil(p) };
           if (ruta === '/api/busqueda' && metodo === 'POST') return await publica.busqueda(c);
           if (ruta === '/api/contacto' && metodo === 'POST') return await publica.contacto(c);
+          if (ruta === '/api/pago' && metodo === 'POST') return await publica.pago(c);
           if (ruta === '/api/partidas' && metodo === 'GET') return await apiHerramientas.partidas(c);
           if (ruta === '/api/directorio' && metodo === 'POST') return await apiHerramientas.registrarEmpresa(c);
           return error('No encontrado.', 404);
@@ -111,6 +112,7 @@ export default {
       else if (ruta === '/herramientas/guias') [respuesta, seccion] = [herramientas.herramientaGuias(p), 'herramientas'];
       else if (ruta === '/directorio') [respuesta, seccion] = [await herramientas.directorio(p), 'directorio'];
       else if (ruta === '/anunciate') [respuesta, seccion] = [await paginas.anunciate(p), 'anunciate'];
+      else if (ruta === '/anunciate/pagar') [respuesta, seccion] = [paginas.pagar(p), 'anunciate'];
       else if (ruta === '/privacidad') [respuesta, seccion] = [paginas.privacidad(p), 'privacidad'];
       else {
         // Archivos estáticos (favicon, etc.)

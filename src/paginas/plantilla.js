@@ -17,10 +17,10 @@ export const LOGO = `<svg viewBox="0 0 40 40" aria-hidden="true" class="logo-ico
 export function pagina(ctx, { titulo, descripcion, ruta, seccion, cuerpo, imagen, extraHead = '', noindex = false }) {
   const { env, base, cfg, anuncios, tc } = ctx;
   const sitio = env.SITE_NAME || 'ImportaYa';
-  const tituloCompleto = titulo ? `${titulo} | ${sitio}` : `${sitio} · Noticias de importación, tipo de cambio y calculadora de impuestos`;
+  const tituloCompleto = titulo ? `${titulo} | ${sitio}` : `${sitio} · Noticias para importadores y exportadores, tipo de cambio y calculadora de impuestos`;
   const desc =
     descripcion ||
-    'Noticias diarias de importación y comercio exterior de Perú, China y el mundo, tipo de cambio SUNAT y calculadora gratis de impuestos de importación.';
+    'Noticias diarias para importadores y exportadores: comercio exterior de Perú, China y el mundo, tipo de cambio SUNAT y calculadora gratis de impuestos de importación.';
   const url = base + (ruta || '/');
   const og = imagen || `${base}/assets/og-importaya.png`;
   const menu = MENU.map(
@@ -74,7 +74,7 @@ ${cuerpo}
   <div class="contenedor pie-columnas">
     <div>
       <a class="logo logo-pie" href="/">${LOGO}<span>Importa<b>Ya</b></span></a>
-      <p>Noticias de importación y exportación de Perú, China y el mundo, tipo de cambio y herramientas gratis para importadores.</p>
+      <p>Noticias de importación y exportación de Perú, China y el mundo, tipo de cambio y herramientas gratis para importadores y exportadores.</p>
     </div>
     <div>
       <h3>Secciones</h3>
@@ -83,7 +83,7 @@ ${cuerpo}
     </div>
     <div>
       <h3>Empresas</h3>
-      <p>Llega a miles de importadores peruanos cada mes.</p>
+      <p>Llega a miles de importadores y exportadores peruanos cada mes.</p>
       <a class="btn btn-naranja" href="/anunciate">Anúnciate aquí</a> ${whatsapp}
     </div>
   </div>

@@ -4,7 +4,7 @@ import { claveCorrecta, crearSesion, cerrarSesion, esAdmin } from '../lib/auth.j
 import { leerConfig, guardarConfig } from '../lib/config.js';
 import { ESPACIOS } from '../lib/anuncios.js';
 import { PAISES, urlSegura, terminoLimpio } from '../lib/texto.js';
-import { parsearPartidas, TIPOS_EMPRESA } from '../lib/aduana.js';
+import { parsearPartidas, parsearEmpresas, TIPOS_EMPRESA } from '../lib/aduana.js';
 import { TAREAS, ejecutarTarea } from '../tareas/index.js';
 import { actualizarNoticias } from '../tareas/noticias.js';
 import { actualizarVideos } from '../tareas/videos.js';
@@ -229,6 +229,28 @@ export async function manejarAdmin(ctx, accion) {
       return json({ ok: true });
 
     // ── Directorio de empresas ──
+    case 'POST empresas-importar': {
+      const texto = String(d.texto || '');
+      if (texto.length > 400000) return error('El bloque es demasiado grande. Súbelo en partes.');
+      const { filas, descartadas } = parsearEmpresas(texto);
+      const ahora = ahoraIso();
+      for (let i = 0; i < filas.length; i += 100) {
+        await db.batch(
+          filas.slice(i, i + 100).map((f) => {
+            const web = f.web ? urlSegura(/^https?:\/\//i.test(f.web) ? f.web : `https://${f.web}`) || '' : '';
+            return db
+              .prepare(
+                `INSERT INTO empresas (ruc, razon_social, tipo, rubro, productos, ciudad, web, telefono, email, descripcion, estado, creado)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, '', '', 'aprobada', ?)
+                 ON CONFLICT(ruc) DO UPDATE SET razon_social = excluded.razon_social, tipo = excluded.tipo, rubro = excluded.rubro,
+                   productos = excluded.productos, ciudad = excluded.ciudad, web = excluded.web, telefono = excluded.telefono, estado = 'aprobada'`
+              )
+              .bind(f.ruc, f.razon_social, f.tipo, f.rubro, f.productos, f.ciudad, web, f.telefono, ahora);
+          })
+        );
+      }
+      return json({ ok: true, guardadas: filas.length, descartadas });
+    }
     case 'GET empresas': {
       const { results } = await db
         .prepare(`SELECT * FROM empresas ORDER BY CASE estado WHEN 'pendiente' THEN 0 WHEN 'aprobada' THEN 1 ELSE 2 END, id DESC LIMIT 300`)

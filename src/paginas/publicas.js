@@ -3,7 +3,7 @@ import { html, mesLima, mesAnterior, fechaLima, esBot } from '../lib/http.js';
 import { esc, recortar, fechaLarga, nombreMes, terminoLimpio, slug, PAISES } from '../lib/texto.js';
 import { espacio, ESPACIOS } from '../lib/anuncios.js';
 import { svgEsquema } from '../lib/mapa-web.js';
-import { NOMBRE_PDF } from '../lib/correos-ventas.js';
+import { NOMBRE_PDF, HORAS_PUBLICACION } from '../lib/correos-ventas.js';
 import { historialTipoCambio } from '../tareas/tipo-cambio.js';
 import { topTerminos } from '../tareas/mantenimiento.js';
 import { registrarBusqueda } from '../api/publica.js';
@@ -107,7 +107,8 @@ export async function inicio(ctx) {
   const cuerpo = `
 <section class="portada">
   <div class="portada-texto">
-    <h1>Todo lo que un importador necesita saber hoy</h1>
+    <h1>Todo lo que un importador y exportador necesita saber hoy</h1>
+    <p class="portada-para">Para <b>importadores y exportadores</b> · ambos</p>
     <p>Noticias de Perú 🇵🇪, China 🇨🇳 y el mundo 🌎 actualizadas cada hora, el dólar del día y la calculadora de impuestos de importación. <b>Gratis.</b></p>
     <div class="portada-botones">
       <a class="btn btn-naranja" href="/calculadora">🧮 ¿Cuánto pago de aduana?</a>
@@ -495,8 +496,8 @@ export async function anunciate(ctx) {
   const cuerpo = `
 <section class="portada portada-anuncio">
   <div class="portada-texto">
-    <h1>Anuncia tu empresa frente a los importadores del Perú</h1>
-    <p>ImportaYa reúne a personas y empresas que importan desde China, EE. UU. y el mundo: el público ideal para agentes de carga, agencias de aduana, couriers, bancos, seguros y almacenes.</p>
+    <h1>Anuncia tu empresa frente a importadores y exportadores del Perú</h1>
+    <p>ImportaYa es la web para <b>importadores y exportadores</b>: reúne a personas y empresas que compran y venden con China, EE. UU. y el mundo, el público ideal para agentes de carga, agencias de aduana, couriers, bancos, seguros y almacenes.</p>
     <div class="portada-botones"><a class="btn btn-naranja btn-grande" href="#contacto">Quiero anunciar</a>${wsp}</div>
   </div>
 </section>
@@ -522,7 +523,8 @@ ${Object.entries(ESPACIOS)
   )
   .join('')}
 </div>
-<p class="oferta">⭐ <b>Plan anual:</b> ${esc(cfg.oferta_anual)} Pago por transferencia o Yape, con comprobante.</p>
+<p class="oferta">⭐ <b>Plan anual:</b> ${esc(cfg.oferta_anual)} Pago por Yape o transferencia.</p>
+<p class="oferta oferta-pago">💳 ¿Ya elegiste tu espacio? <a class="btn btn-naranja" href="/anunciate/pagar">Pagar con Yape o transferencia</a></p>
 <section class="caja contacto" id="contacto">
   <h2>Escríbenos</h2>
   <p>Déjanos tus datos y te respondemos al correo con los precios, el PDF con las medidas y los datos para pagar.</p>
@@ -546,10 +548,86 @@ ${Object.entries(ESPACIOS)
   return html(
     pagina(ctx, {
       titulo: 'Anúnciate en ImportaYa',
-      descripcion: 'Publicidad para agentes de carga, agencias de aduana, couriers y empresas de comercio exterior. Llega a los importadores del Perú.',
+      descripcion: 'Publicidad para agentes de carga, agencias de aduana, couriers y empresas de comercio exterior. Llega a importadores y exportadores del Perú.',
       ruta: '/anunciate',
       seccion: 'anunciate',
       cuerpo,
+    })
+  );
+}
+
+// Página de pago: Yape y transferencia + formulario "Ya pagué".
+export function pagar(ctx) {
+  const { cfg } = ctx;
+  const url = new URL(ctx.request.url);
+  const elegido = ESPACIOS[url.searchParams.get('espacio')] ? url.searchParams.get('espacio') : '';
+  const copiar = (v) => `<button type="button" class="btn btn-claro btn-copiar" data-copiar="${esc(v)}">Copiar</button>`;
+  const cuerpo = `
+<section class="portada portada-anuncio">
+  <div class="portada-texto">
+    <h1>Paga tu publicidad en ImportaYa</h1>
+    <p>Paga en soles por <b>Yape</b> o por <b>transferencia</b> y avísanos aquí. Tu anuncio sale en la web <b>dentro de ${HORAS_PUBLICACION} horas</b> después de que nos envíes tu banner.</p>
+  </div>
+</section>
+<div class="pago-rejilla">
+  <section class="pago-tarjeta pago-yape">
+    <h2>Paga con Yape</h2>
+    <img class="pago-qr" src="/assets/yape-qr.png" alt="Código QR de Yape para pagar" width="330" height="324">
+    <p class="pago-linea">o yapea al número</p>
+    <p class="pago-numero">${esc(cfg.yape_numero)}</p>
+    ${copiar(cfg.yape_numero)}
+  </section>
+  <section class="pago-tarjeta pago-bcp">
+    <div class="pago-bcp-cab"><img src="/assets/bcp-azul.png" alt="BCP" width="260" height="74"></div>
+    <div class="pago-bcp-cuerpo">
+      <h2>Transferencia en soles</h2>
+      <p class="pago-etiqueta">Cuenta BCP Soles</p>
+      <p class="pago-cuenta"><b>${esc(cfg.cuenta_bcp)}</b> ${copiar(cfg.cuenta_bcp)}</p>
+      <p class="pago-etiqueta">Cuenta interbancaria (CCI)</p>
+      <p class="pago-cuenta"><b>${esc(cfg.cuenta_cci)}</b> ${copiar(cfg.cuenta_cci)}</p>
+      <p class="suave">Desde cualquier banco o billetera.</p>
+    </div>
+  </section>
+</div>
+<section class="caja contacto" id="ya-pague">
+  <h2>Ya pagué</h2>
+  <p>Después de pagar, completa esto. Te enviamos un correo con el PDF y las instrucciones, y yo recibo el aviso para publicar tu anuncio.</p>
+  <form id="form-pago" class="formulario">
+    <label>Tu nombre<input name="nombre" required maxlength="80" autocomplete="name"></label>
+    <label>Empresa<input name="empresa" required maxlength="100" autocomplete="organization"></label>
+    <label>Correo (te enviamos la confirmación)<input name="email" type="email" required maxlength="120" autocomplete="email"></label>
+    <label>WhatsApp / teléfono<input name="telefono" maxlength="30" autocomplete="tel"></label>
+    <label>Espacio que pagaste
+      <select name="espacio" required><option value="">Elige…</option>${Object.entries(ESPACIOS)
+        .map(([id, e]) => `<option value="${id}"${id === elegido ? ' selected' : ''}>${esc(e.nombre)} (${esc(e.medida)}) · ${esc(cfg['precio_' + id] || '')}</option>`)
+        .join('')}</select>
+    </label>
+    <label>¿Cómo pagaste?
+      <select name="metodo"><option value="yape">Yape</option><option value="transferencia">Transferencia</option></select>
+    </label>
+    <label class="campo-ancho">N.º de operación (opcional)<input name="operacion" maxlength="40"></label>
+    <label class="trampa" aria-hidden="true">No llenar<input name="web" tabindex="-1" autocomplete="off"></label>
+    <button class="btn btn-naranja btn-grande" type="submit">Ya pagué</button>
+    <p class="mensaje-form" role="status"></p>
+  </form>
+</section>
+<section class="caja">
+  <h2>Qué debes enviarnos después de pagar</h2>
+  <ol>
+    <li>La <b>imagen de tu banner en PNG o JPG</b> con la medida exacta de tu espacio.</li>
+    <li>El <b>link</b> a donde quieres que lleve tu anuncio.</li>
+    <li>Envía todo a <a href="mailto:${esc(cfg.correo_ventas)}">${esc(cfg.correo_ventas)}</a> (o responde el correo de confirmación).</li>
+  </ol>
+  <p><b>Tu anuncio estará en la web dentro de ${HORAS_PUBLICACION} horas</b> después de recibir tu archivo. <a href="/anunciate/${NOMBRE_PDF}" download>Descargar PDF con las medidas</a>.</p>
+</section>`;
+  return html(
+    pagina(ctx, {
+      titulo: 'Pagar publicidad',
+      descripcion: 'Paga tu espacio publicitario en ImportaYa por Yape o transferencia BCP.',
+      ruta: '/anunciate/pagar',
+      seccion: 'anunciate',
+      cuerpo,
+      noindex: true,
     })
   );
 }
@@ -560,7 +638,7 @@ export function privacidad(ctx) {
   const contacto = ctx.cfg.email ? `<a href="mailto:${esc(ctx.cfg.email)}">${esc(ctx.cfg.email)}</a>` : 'el formulario de la página Anúnciate';
   const cuerpo = `<article class="articulo legal">
 <h1>Política de privacidad</h1>
-<p>${sitio} es un portal gratuito de noticias y herramientas para importadores. Esta política explica qué datos usamos, conforme a la Ley N.º 29733 de Protección de Datos Personales del Perú.</p>
+<p>${sitio} es un portal gratuito de noticias y herramientas para importadores y exportadores. Esta política explica qué datos usamos, conforme a la Ley N.º 29733 de Protección de Datos Personales del Perú.</p>
 <h2>Qué datos guardamos</h2>
 <ul>
 <li><b>Calculadora y buscador:</b> guardamos el nombre del producto o el término que escribes, sin asociarlo a tu identidad, para armar el ranking “Lo más buscado”. Los montos que calculas no salen de tu navegador.</li>
