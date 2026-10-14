@@ -1,8 +1,10 @@
 // Trae noticias nuevas de las fuentes RSS y las guarda en D1.
 import { leerFeed } from '../lib/rss.js';
-import { leerConfig, listaPalabras } from '../lib/config.js';
+import { leerConfig } from '../lib/config.js';
+import { crearFiltro } from '../lib/filtro.js';
+import { limpiarFueraDeTema } from './filtrar.js';
 import { ahoraIso } from '../lib/http.js';
-import { tituloNorm, sinAcentos, urlSegura, recortar } from '../lib/texto.js';
+import { tituloNorm, urlSegura, recortar } from '../lib/texto.js';
 
 const UA = 'Mozilla/5.0 (compatible; ImportaYaBot/1.0; +https://importaya.pe)';
 const DIAS_MAX = 10;
@@ -10,7 +12,7 @@ const DIAS_MAX = 10;
 export async function actualizarNoticias(env, { lote = 10, soloFuente = null } = {}) {
   const db = env.DB;
   const cfg = await leerConfig(db);
-  const palabras = listaPalabras(cfg.palabras_clave).map(sinAcentos);
+  const filtro = crearFiltro(cfg);
   const fuentes = soloFuente
     ? (await db.prepare('SELECT * FROM fuentes WHERE id = ?').bind(soloFuente).all()).results
     : (
@@ -20,13 +22,20 @@ export async function actualizarNoticias(env, { lote = 10, soloFuente = null } =
           .all()
       ).results;
 
-  const resultados = await Promise.all(fuentes.map((f) => procesarFuente(db, f, palabras)));
+  const resultados = await Promise.all(fuentes.map((f) => procesarFuente(db, f, filtro)));
   const nuevas = resultados.reduce((a, r) => a + r.nuevas, 0);
   const errores = resultados.filter((r) => r.error).length;
-  return `${fuentes.length} fuentes revisadas, ${nuevas} noticias nuevas${errores ? `, ${errores} con error` : ''}`;
+  // Retira también lo que ya estaba guardado y no es del rubro (noticias y videos).
+  let retiradas = '';
+  try {
+    retiradas = ` · ${await limpiarFueraDeTema(env)}`;
+  } catch (e) {
+    console.error('filtro', e);
+  }
+  return `${fuentes.length} fuentes revisadas, ${nuevas} noticias nuevas${errores ? `, ${errores} con error` : ''}${retiradas}`;
 }
 
-async function procesarFuente(db, f, palabras) {
+async function procesarFuente(db, f, filtro) {
   const ahora = ahoraIso();
   try {
     const r = await fetch(f.url, {
@@ -44,7 +53,7 @@ async function procesarFuente(db, f, palabras) {
       const n = normalizar(it, f);
       if (!n) continue;
       if (new Date(n.publicado).getTime() < limite) continue;
-      if (f.filtrar && !coincide(n.titulo + ' ' + n.descripcion, palabras)) continue;
+      if (!filtro.relevante(n.titulo, n.descripcion)) continue; // solo comercio exterior y economía
       sentencias.push(
         db
           .prepare(
@@ -105,9 +114,4 @@ function normalizar(it, f) {
     fuente: recortar(fuente, 80),
     publicado,
   };
-}
-
-function coincide(texto, palabras) {
-  const t = sinAcentos(texto).toLowerCase();
-  return palabras.some((p) => t.includes(p));
 }

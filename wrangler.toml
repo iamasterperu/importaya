@@ -39,7 +39,7 @@ binding = "AI"
 [vars]
 SITE_NAME = "ImportaYa"
 SITE_URL = ""                     # vacío = se usa la dirección de la visita. Ej.: "https://importaya.pe"
-AI_MODEL = "@cf/meta/llama-3.1-8b-instruct"
+AI_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast"
 GEMINI_MODEL = "gemini-2.5-flash" # solo se usa si agregas el secreto GEMINI_API_KEY
 
 [[d1_databases]]

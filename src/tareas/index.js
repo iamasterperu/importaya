@@ -5,6 +5,7 @@ import { actualizarVideos } from './videos.js';
 import { actualizarTipoCambio } from './tipo-cambio.js';
 import { generarResumenes } from './resumenes.js';
 import { cerrarRankingMensual, limpiar } from './mantenimiento.js';
+import { limpiarFueraDeTema } from './filtrar.js';
 import { ahoraIso } from '../lib/http.js';
 
 export const TAREAS = {
@@ -14,6 +15,7 @@ export const TAREAS = {
   resumenes: (env) => generarResumenes(env),
   ranking: (env) => cerrarRankingMensual(env),
   limpieza: (env) => limpiar(env),
+  filtro: (env) => limpiarFueraDeTema(env),
 };
 
 export async function ejecutarTarea(env, nombre) {

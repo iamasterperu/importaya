@@ -580,7 +580,7 @@ export function noEncontrado(ctx) {
 
 export async function sitemap(ctx) {
   const { results } = await ctx.env.DB.prepare('SELECT id, titulo, publicado FROM noticias WHERE oculta = 0 ORDER BY publicado DESC LIMIT 1000').all();
-  const fijas = ['/', '/noticias', '/videos', '/calculadora', '/tendencias', '/anunciate'];
+  const fijas = ['/', '/noticias', '/videos', '/calculadora', '/herramientas', '/herramientas/carga', '/herramientas/cotizador', '/herramientas/partidas', '/herramientas/guias', '/directorio', '/tendencias', '/anunciate'];
   const urls = fijas
     .map((u) => `<url><loc>${esc(ctx.base + u)}</loc><changefreq>hourly</changefreq></url>`)
     .concat(results.map((n) => `<url><loc>${esc(ctx.base + `/n/${n.id}/${slug(n.titulo) || 'noticia'}`)}</loc><lastmod>${esc(n.publicado)}</lastmod></url>`));

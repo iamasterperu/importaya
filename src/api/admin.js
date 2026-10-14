@@ -4,6 +4,7 @@ import { claveCorrecta, crearSesion, cerrarSesion, esAdmin } from '../lib/auth.j
 import { leerConfig, guardarConfig } from '../lib/config.js';
 import { ESPACIOS } from '../lib/anuncios.js';
 import { PAISES, urlSegura, terminoLimpio } from '../lib/texto.js';
+import { parsearPartidas, TIPOS_EMPRESA } from '../lib/aduana.js';
 import { TAREAS, ejecutarTarea } from '../tareas/index.js';
 import { actualizarNoticias } from '../tareas/noticias.js';
 import { actualizarVideos } from '../tareas/videos.js';
@@ -195,6 +196,51 @@ export async function manejarAdmin(ctx, accion) {
       return json({ ok: true });
     case 'POST contactos-borrar':
       await db.prepare('DELETE FROM contactos WHERE id = ?').bind(d.id).run();
+      return json({ ok: true });
+
+    // ── Partidas arancelarias ──
+    case 'GET partidas': {
+      const n = await db.prepare('SELECT COUNT(*) AS n FROM partidas').first();
+      const { results } = await db.prepare('SELECT codigo, descripcion, advalorem FROM partidas ORDER BY codigo LIMIT 5').all();
+      return json({ total: n.n, muestra: results });
+    }
+    case 'POST partidas-importar': {
+      const texto = String(d.texto || '');
+      if (texto.length > 400000) return error('El bloque es demasiado grande. Súbelo en partes.');
+      const { filas, descartadas } = parsearPartidas(texto);
+      if (d.reemplazar) await db.prepare('DELETE FROM partidas').run();
+      for (let i = 0; i < filas.length; i += 100) {
+        await db.batch(
+          filas.slice(i, i + 100).map((f) =>
+            db
+              .prepare(
+                `INSERT INTO partidas (codigo, descripcion, busqueda, advalorem, notas) VALUES (?, ?, ?, ?, ?)
+                 ON CONFLICT(codigo) DO UPDATE SET descripcion = excluded.descripcion, busqueda = excluded.busqueda,
+                   advalorem = excluded.advalorem, notas = excluded.notas`
+              )
+              .bind(f.codigo, f.descripcion, f.busqueda, f.advalorem, f.notas)
+          )
+        );
+      }
+      return json({ ok: true, guardadas: filas.length, descartadas });
+    }
+    case 'POST partidas-vaciar':
+      await db.prepare('DELETE FROM partidas').run();
+      return json({ ok: true });
+
+    // ── Directorio de empresas ──
+    case 'GET empresas': {
+      const { results } = await db
+        .prepare(`SELECT * FROM empresas ORDER BY CASE estado WHEN 'pendiente' THEN 0 WHEN 'aprobada' THEN 1 ELSE 2 END, id DESC LIMIT 300`)
+        .all();
+      return json({ empresas: results, tipos: TIPOS_EMPRESA });
+    }
+    case 'POST empresas-estado':
+      if (!['pendiente', 'aprobada', 'rechazada'].includes(d.estado)) return error('Estado no válido.');
+      await db.prepare('UPDATE empresas SET estado = ? WHERE id = ?').bind(d.estado, d.id).run();
+      return json({ ok: true });
+    case 'POST empresas-borrar':
+      await db.prepare('DELETE FROM empresas WHERE id = ?').bind(d.id).run();
       return json({ ok: true });
 
     // ── Búsquedas ──
